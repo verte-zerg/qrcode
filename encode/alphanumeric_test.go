@@ -20,10 +20,12 @@ func TestGetAlphaNumericData(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%v", test.content)
 		t.Run(name, func(t *testing.T) {
-			data, err := AlphaNumericEncoder{}.Encode(test.content)
+			data, err := EncodeDataWrapper(test.content, EncodingModeAlphaNumeric)
 			if err != nil {
 				t.Error(err)
-			} else if !bytes.Equal(data, test.data) {
+				return
+			}
+			if !bytes.Equal(data, test.data) {
 				t.Errorf("Expected %b, got %b", test.data, data)
 			}
 		})

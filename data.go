@@ -28,21 +28,15 @@ var ErrContentTooLong = fmt.Errorf("content is too long")
 // Mode is one of the EncodingMode constants.
 // Length bits is the number of length bits returned by GetLengthBits.
 // Items count is the number of chars in the data block.
-func GetBytesPrefix(mode encode.EncodingMode, lengthBits, itemsCount int) []byte {
-	var data []byte
-	data = append(data, byte(mode<<4))
-	if lengthBits <= 12 {
-		freeBits := 12 - lengthBits
-		data[0] |= byte(itemsCount >> (8 - freeBits))
-		data = append(data, byte((itemsCount<<freeBits)&0xff))
-	} else {
-		freeBits := 20 - lengthBits
-		data[0] |= byte(itemsCount >> (16 - freeBits))
-		data = append(data, byte((itemsCount>>(8-freeBits))&0xff))
-		data = append(data, byte((itemsCount<<freeBits)&0xff))
+func GetBytesPrefix(mode encode.EncodingMode, lengthBits, itemsCount int, queue chan encode.ValueBlock) {
+	queue <- encode.ValueBlock{
+		Value: int(mode),
+		Bits:  4,
 	}
-
-	return data
+	queue <- encode.ValueBlock{
+		Value: itemsCount,
+		Bits:  lengthBits,
+	}
 }
 
 // CalculateMinVersion returns the minimum version for the given content, encoding mode, and error correction level.
@@ -102,9 +96,8 @@ func RearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLev
 
 	for i := 0; i < maxBlockSize; i++ {
 		for j := 0; j < len(blocksData); j++ {
-			if len(blocksData[j]) > 0 {
-				buf = append(buf, blocksData[j][0])
-				blocksData[j] = blocksData[j][1:]
+			if i < len(blocksData[j]) {
+				buf = append(buf, blocksData[j][i])
 			}
 		}
 	}
@@ -114,18 +107,21 @@ func RearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLev
 
 // GetBytesData returns the byte array for the given content, encoding mode, error correction level, and version.
 func GetBytesData(blocks []encode.EncodeBlock, errorLevel ErrorCorrectionLevel, version int) ([]byte, error) {
-	data := []byte{}
 	allBits := 0
+
+	queue := make(chan encode.ValueBlock, 100)
+	result := make(chan []byte)
+
+	go encode.GenerateData(queue, result)
 
 	for _, block := range blocks {
 		dataSize := utf8.RuneCountInString(block.Data)
-		freeBits := len(data)*8 - allBits
 
 		lengthBits, err := encode.GetLengthBits(version, block.Mode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get length bits: %w", err)
 		}
-		dataBlock := GetBytesPrefix(block.Mode, lengthBits, dataSize)
+		GetBytesPrefix(block.Mode, lengthBits, dataSize, queue)
 		dataBlockBits, err := encode.CalculateDataBitsCount(block.Data, block.Mode)
 		if err != nil {
 			return nil, fmt.Errorf("failed to calculate data bits count: %w", err)
@@ -133,41 +129,16 @@ func GetBytesData(blocks []encode.EncodeBlock, errorLevel ErrorCorrectionLevel, 
 
 		allBlockBits := dataBlockBits + lengthBits + 4
 		allBits += allBlockBits
-		freeBitsBlock := len(dataBlock)*8 - lengthBits - 4
 
-		buf, err := encode.EncodeData(block.Data, block.Mode)
+		err = encode.EncodeData(block.Data, block.Mode, queue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode data: %w", err)
 		}
 
-		if freeBitsBlock == 0 {
-			dataBlock = append(dataBlock, 0)
-			freeBitsBlock = 8
-		}
-
-		for _, b := range buf {
-			dataBlock[len(dataBlock)-1] |= b >> (8 - freeBitsBlock)
-			dataBlockBits -= freeBitsBlock
-			if dataBlockBits > 0 {
-				dataBlock = append(dataBlock, byte((uint(b)<<freeBitsBlock)&0xff))
-				dataBlockBits -= 8 - freeBitsBlock
-			}
-		}
-
-		if freeBits == 0 {
-			data = append(data, 0)
-			freeBits = 8
-		}
-
-		for _, b := range dataBlock {
-			data[len(data)-1] |= b >> (8 - freeBits)
-			allBlockBits -= freeBits
-			if allBlockBits > 0 {
-				data = append(data, byte((uint(b)<<freeBits)&0xff))
-				allBlockBits -= 8 - freeBits
-			}
-		}
 	}
+
+	close(queue)
+	data := <-result
 
 	// add terminator
 	remainedBits := len(data)*8 - allBits

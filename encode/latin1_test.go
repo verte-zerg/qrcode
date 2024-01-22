@@ -17,10 +17,13 @@ func TestLatin1Data(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%v", test.content)
 		t.Run(name, func(t *testing.T) {
-			data, err := Latin1Encoder{}.Encode(test.content)
+			data, err := EncodeDataWrapper(test.content, EncodingModeLatin1)
 			if err != nil {
 				t.Error(err)
-			} else if !bytes.Equal(data, test.data) {
+				return
+			}
+
+			if !bytes.Equal(data, test.data) {
 				t.Errorf("Expected %b, got %b", test.data, data)
 			}
 		})

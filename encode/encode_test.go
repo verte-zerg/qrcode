@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func EncodeDataWrapper(data string, mode EncodingMode) ([]byte, error) {
+	queue := make(chan ValueBlock, 100)
+	result := make(chan []byte)
+
+	go GenerateData(queue, result)
+
+	err := EncodeData(data, mode, queue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode data: %w", err)
+	}
+
+	close(queue)
+	return <-result, nil
+}
+
 func TestEncodingMode(t *testing.T) {
 	tests := []struct {
 		s    string

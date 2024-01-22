@@ -8,17 +8,12 @@ import (
 
 type KanjiEncoder struct{}
 
-func (KanjiEncoder) Encode(content string) ([]byte, error) {
+func (KanjiEncoder) Encode(content string, queue chan ValueBlock) error {
 	enc := japanese.ShiftJIS.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode string to kanji: %w", err)
+		return fmt.Errorf("failed to encode string to kanji: %w", err)
 	}
-
-	const itemSize = 13
-
-	var data []byte
-	freeBits := 0
 
 	for i := 0; i < len(buf); i += 2 {
 		high, low := buf[i], buf[i+1]
@@ -32,36 +27,17 @@ func (KanjiEncoder) Encode(content string) ([]byte, error) {
 			high -= 0xC1
 			low -= 0x40
 		} else {
-			return nil, fmt.Errorf("invalid byte: %v", high)
+			return fmt.Errorf("invalid byte: %v", high)
 		}
 
 		value := uint(high)*0xC0 + uint(low)
-
-		if freeBits == 0 {
-			data = append(data, 0)
-			freeBits = 8
+		queue <- ValueBlock{
+			Bits:  13,
+			Value: int(value),
 		}
-
-		data[len(data)-1] |= byte(value >> (itemSize - freeBits))
-
-		var b byte
-
-		if itemSize > freeBits+8 {
-			b = byte(value >> ((itemSize - freeBits) - 8))
-		} else {
-			b = byte(value << (8 - (itemSize - freeBits)) & 0xff)
-		}
-
-		data = append(data, b)
-
-		if itemSize > freeBits+8 {
-			data = append(data, byte(value<<(16-(itemSize-freeBits))&0xff))
-		}
-
-		freeBits = (freeBits + 3) % 8
 	}
 
-	return data, nil
+	return nil
 }
 
 func (KanjiEncoder) CanEncode(content string) bool {

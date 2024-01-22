@@ -8,14 +8,21 @@ import (
 
 type Latin1Encoder struct{}
 
-func (Latin1Encoder) Encode(content string) ([]byte, error) {
+func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
 	enc := charmap.ISO8859_1.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode string to latin1: %w", err)
+		return fmt.Errorf("failed to encode string to latin1: %w", err)
 	}
 
-	return buf, nil
+	for _, b := range buf {
+		queue <- ValueBlock{
+			Bits:  8,
+			Value: int(b),
+		}
+	}
+
+	return nil
 }
 
 func (Latin1Encoder) Size(length int) int {

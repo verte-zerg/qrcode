@@ -26,8 +26,15 @@ func TestPrefixBytes(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("mode %v, lengthBits %v, codewords %v", test.mode, test.lengthBits, test.codewords)
 		t.Run(name, func(t *testing.T) {
-			if prefix := GetBytesPrefix(test.mode, test.lengthBits, test.codewords); !bytes.Equal(prefix, test.prefix) {
-				t.Errorf("Expected %b, got %b", test.prefix, prefix)
+			queue := make(chan encode.ValueBlock, 10)
+			result := make(chan []byte)
+			go encode.GenerateData(queue, result)
+			GetBytesPrefix(test.mode, test.lengthBits, test.codewords, queue)
+			close(queue)
+			data := <-result
+
+			if !bytes.Equal(data, test.prefix) {
+				t.Errorf("Expected %b, got %b", test.prefix, data)
 			}
 		})
 	}

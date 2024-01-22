@@ -36,7 +36,7 @@ var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
 
 type QREncoder interface {
 	Mode() EncodingMode
-	Encode(s string) ([]byte, error)
+	Encode(s string, queue chan ValueBlock) error
 	CanEncode(content string) bool
 	Size(length int) int
 }
@@ -44,6 +44,11 @@ type QREncoder interface {
 type EncodeBlock struct {
 	Mode EncodingMode
 	Data string
+}
+
+type ValueBlock struct {
+	Value int
+	Bits  int
 }
 
 type ErrVersionInvalid struct {
@@ -81,18 +86,18 @@ func GetEncodingMode(s string) (EncodingMode, error) {
 }
 
 // EncodeData transforms the content to the byte array according to the encoding mode.
-func EncodeData(content string, mode EncodingMode) ([]byte, error) {
+func EncodeData(content string, mode EncodingMode, queue chan ValueBlock) error {
 	enc, ok := EncodingModeEncoderMap[mode]
 	if !ok {
-		return nil, ErrUnknownEncodingMode
+		return ErrUnknownEncodingMode
 	}
 
-	buf, err := enc.Encode(content)
+	err := enc.Encode(content, queue)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode string: %w", err)
+		return fmt.Errorf("failed to encode string: %w", err)
 	}
 
-	return buf, nil
+	return nil
 }
 
 // CalculateDataBitsCount returns the number of data bits for the given content and encoding mode.
@@ -127,4 +132,47 @@ func GetLengthBits(version int, mode EncodingMode) (int, error) {
 		return dataLength[1], nil
 	}
 	return dataLength[2], nil
+}
+
+func GenerateData(queue chan ValueBlock, result chan []byte) {
+	var data []byte
+	freeBits := 0
+
+	for v := range queue {
+		var b byte
+
+		blockSize := v.Bits
+		value := v.Value
+
+		if freeBits == 0 {
+			data = append(data, 0)
+			freeBits = 8
+		}
+
+		if blockSize > freeBits {
+			b = byte(value >> (blockSize - freeBits))
+		} else {
+			b = byte(value << (freeBits - blockSize) & 0xff)
+		}
+
+		data[len(data)-1] |= b
+
+		if blockSize > freeBits {
+			if blockSize > freeBits+8 {
+				b = byte(value >> ((blockSize - freeBits) - 8))
+			} else {
+				b = byte(value << (8 - (blockSize - freeBits)) & 0xff)
+			}
+
+			data = append(data, b)
+		}
+
+		if blockSize > freeBits+8 {
+			data = append(data, byte(value<<(16-(blockSize-freeBits))&0xff))
+		}
+
+		freeBits = (freeBits + (16 - blockSize)) % 8
+	}
+
+	result <- data
 }
