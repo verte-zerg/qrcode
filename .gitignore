@@ -1,0 +1,11 @@
+# Python
+.venv
+*.py
+*.ipynb
+.python-version
+
+# Mac
+.DS_Store
+
+# Images
+*.png
