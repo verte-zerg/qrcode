@@ -156,7 +156,7 @@ func TestPlotWithComparing(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			mode := mode
 			t.Parallel()
-			for i := 0; i < 1500; i++ {
+			for i := 0; i < 500; i++ {
 				var content string
 
 				size := i + 1

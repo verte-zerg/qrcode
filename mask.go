@@ -1,7 +1,5 @@
 package qrcode
 
-import "fmt"
-
 var (
 	maskFuncs = []func(row, col int) bool{
 		func(row, col int) bool { return (row+col)%2 == 0 },
@@ -20,10 +18,6 @@ func ApplyMask(data [][]Cell, maskType int) {
 		for jdx, cell := range row {
 			if cell.Type != CellTypeData {
 				continue
-			}
-
-			if idx == 56 && jdx == 56 {
-				fmt.Println(maskFuncs[maskType](idx, jdx), cell.Value)
 			}
 
 			data[idx][jdx].Value = maskFuncs[maskType](idx, jdx) != cell.Value

@@ -1,7 +1,5 @@
 package qrcode
 
-import "fmt"
-
 type CellType int
 
 const (
@@ -340,8 +338,6 @@ func FillDataBlock(field [][]Cell, data []byte) {
 		}
 		pos.Next()
 	}
-
-	fmt.Println(pos)
 }
 
 func GenerateField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
