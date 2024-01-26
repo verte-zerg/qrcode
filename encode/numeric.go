@@ -3,11 +3,12 @@ package encode
 import (
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 )
 
 type NumericEncoder struct{}
 
-func (NumericEncoder) Encode(content string, queue chan ValueBlock) error {
+func (*NumericEncoder) Encode(content string, queue chan ValueBlock) error {
 	triplets := len(content) / 3
 	if len(content)%3 != 0 {
 		triplets++
@@ -35,7 +36,8 @@ func (NumericEncoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (NumericEncoder) Size(length int) int {
+func (*NumericEncoder) Size(content string) int {
+	length := utf8.RuneCountInString(content)
 	triplets := length / 3
 	tail := length % 3
 	extra := 0
@@ -46,7 +48,7 @@ func (NumericEncoder) Size(length int) int {
 	return triplets*10 + extra
 }
 
-func (NumericEncoder) CanEncode(content string) bool {
+func (*NumericEncoder) CanEncode(content string) bool {
 	for _, r := range content {
 		if r < '0' || r > '9' {
 			return false
@@ -56,6 +58,6 @@ func (NumericEncoder) CanEncode(content string) bool {
 	return true
 }
 
-func (NumericEncoder) Mode() EncodingMode {
+func (*NumericEncoder) Mode() EncodingMode {
 	return EncodingModeNumeric
 }

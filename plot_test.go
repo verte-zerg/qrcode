@@ -64,6 +64,74 @@ func TestPlot(t *testing.T) {
 	}
 }
 
+func TestPlotUTF8(t *testing.T) {
+	content := "asdfklj;ååß∂∆…¬å´œ¨®ˆπø∑´∆˚çå˜ß¬˚…¬√“‘ˆœ‘ø´®“π\\"
+	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
+		Mode:             encode.EncodingModeECI,
+		Data:             content,
+		SubMode:          encode.EncodingModeLatin1,
+		AssignmentNumber: 26,
+	},
+	}, &QRCodeOptionsMultiMode{
+		ErrorLevel: ErrorCorrectionLevelMedium,
+	},
+	)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	file, err := os.Create("test_utf8.png")
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer file.Close()
+
+	if err := qr.Plot(file); err != nil {
+		t.Error(err)
+	}
+
+	err = ValidateContent(content, "test_utf8.png")
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestPlotCyrilic(t *testing.T) {
+	content := "АВГДЕ"
+	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
+		Mode:             encode.EncodingModeECI,
+		Data:             content,
+		SubMode:          encode.EncodingModeLatin1,
+		AssignmentNumber: 7,
+	},
+	}, &QRCodeOptionsMultiMode{
+		ErrorLevel: ErrorCorrectionLevelMedium,
+	},
+	)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	file, err := os.Create("test_cyrilic.png")
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer file.Close()
+
+	if err := qr.Plot(file); err != nil {
+		t.Error(err)
+	}
+
+	err = ValidateContent(content, "test_cyrilic.png")
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestPlotLong(t *testing.T) {
 	// generate random content string with length 30
 	var content string // = "https://www.qrcode.com/"
@@ -95,7 +163,7 @@ func TestPlotLong(t *testing.T) {
 }
 
 func TestPlotMixed(t *testing.T) {
-	encodeBlocks := []encode.EncodeBlock{
+	encodeBlocks := []*encode.EncodeBlock{
 		{
 			Mode: encode.EncodingModeNumeric,
 			Data: "1234567890",

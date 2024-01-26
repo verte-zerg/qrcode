@@ -2,6 +2,7 @@ package encode
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"golang.org/x/text/encoding/charmap"
 )
@@ -25,14 +26,14 @@ func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (Latin1Encoder) Size(length int) int {
-	return length * 8
+func (*Latin1Encoder) Size(content string) int {
+	return utf8.RuneCountInString(content) * 8
 }
 
-func (Latin1Encoder) CanEncode(content string) bool {
+func (*Latin1Encoder) CanEncode(content string) bool {
 	return regexpLatin1.MatchString(content)
 }
 
-func (Latin1Encoder) Mode() EncodingMode {
+func (*Latin1Encoder) Mode() EncodingMode {
 	return EncodingModeLatin1
 }

@@ -2,11 +2,12 @@ package encode
 
 import (
 	"fmt"
+	"unicode/utf8"
 )
 
 type AlphaNumericEncoder struct{}
 
-func (AlphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {
+func (*AlphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {
 	enc := &AlphaNumericConverter{}
 	encoded, err := enc.Convert(content)
 	if err != nil {
@@ -36,13 +37,14 @@ func (AlphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (AlphaNumericEncoder) CanEncode(content string) bool {
+func (*AlphaNumericEncoder) CanEncode(content string) bool {
 	enc := &AlphaNumericConverter{}
 	_, err := enc.Convert(content)
 	return err == nil
 }
 
-func (AlphaNumericEncoder) Size(length int) int {
+func (*AlphaNumericEncoder) Size(content string) int {
+	length := utf8.RuneCountInString(content)
 	duplets := length / 2
 	tail := length % 2
 	extra := 0
@@ -53,6 +55,6 @@ func (AlphaNumericEncoder) Size(length int) int {
 	return duplets*11 + extra
 }
 
-func (AlphaNumericEncoder) Mode() EncodingMode {
+func (*AlphaNumericEncoder) Mode() EncodingMode {
 	return EncodingModeAlphaNumeric
 }

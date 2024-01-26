@@ -37,7 +37,7 @@ type QRCodeOptionsMultiMode struct {
 	Version int
 }
 
-func CreateMultiMode(blocks []encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error) {
+func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error) {
 	var err error
 	if options == nil {
 		options = &QRCodeOptionsMultiMode{}
@@ -84,11 +84,11 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 		}
 	}
 
-	encodeBlock := encode.EncodeBlock{
+	encodeBlock := &encode.EncodeBlock{
 		Mode: mode,
 		Data: content,
 	}
-	return CreateMultiMode([]encode.EncodeBlock{encodeBlock}, &QRCodeOptionsMultiMode{
+	return CreateMultiMode([]*encode.EncodeBlock{encodeBlock}, &QRCodeOptionsMultiMode{
 		ErrorLevel: options.ErrorLevel,
 		Version:    options.Version,
 	})

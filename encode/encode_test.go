@@ -1,6 +1,7 @@
 package encode
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 )
@@ -11,7 +12,7 @@ func EncodeDataWrapper(data string, mode EncodingMode) ([]byte, error) {
 
 	go GenerateData(queue, result)
 
-	err := EncodeData(data, mode, queue)
+	err := EncodeData(&EncodeBlock{Data: data, Mode: mode}, queue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode data: %w", err)
 	}
@@ -72,10 +73,48 @@ func TestLengthBits(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("version %v, mode %v", test.version, test.mode)
 		t.Run(name, func(t *testing.T) {
-			if bits, err := GetLengthBits(test.version, test.mode); err != nil {
+			block := &EncodeBlock{
+				Mode: test.mode,
+			}
+			if bits, err := block.GetLengthBits(test.version); err != nil {
 				t.Error(err)
 			} else if bits != test.bits {
 				t.Errorf("Expected %v, got %v", test.bits, bits)
+			}
+		})
+	}
+}
+
+func TestPrefixBytes(t *testing.T) {
+	tests := []struct {
+		mode       EncodingMode
+		lengthBits int
+		codewords  int
+		prefix     []byte
+	}{
+		{EncodingModeNumeric, 10, 8, []byte{0b00010000, 0b00100000}},
+		{EncodingModeNumeric, 10, 9, []byte{0b00010000, 0b00100100}},
+		{EncodingModeNumeric, 12, 10, []byte{0b00010000, 0b00001010}},
+		{EncodingModeNumeric, 14, 11, []byte{0b00010000, 0b00000010, 0b11000000}},
+		{EncodingModeAlphaNumeric, 16, 20, []byte{0b00100000, 0b00000001, 0b01000000}},
+		{EncodingModeLatin1, 8, 23, []byte{0b01000001, 0b01110000}},
+	}
+
+	for _, test := range tests {
+		name := fmt.Sprintf("mode %v, lengthBits %v, codewords %v", test.mode, test.lengthBits, test.codewords)
+		t.Run(name, func(t *testing.T) {
+			queue := make(chan ValueBlock, 10)
+			result := make(chan []byte)
+			go GenerateData(queue, result)
+			block := &EncodeBlock{
+				Mode: test.mode,
+			}
+			block.GetBytesPrefix(test.lengthBits, test.codewords, queue)
+			close(queue)
+			data := <-result
+
+			if !bytes.Equal(data, test.prefix) {
+				t.Errorf("Expected %b, got %b", test.prefix, data)
 			}
 		})
 	}

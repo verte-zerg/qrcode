@@ -3,7 +3,6 @@ package qrcode
 import (
 	"fmt"
 	"math"
-	"unicode/utf8"
 
 	"github.com/verte-zerg/qrcode/encode"
 )
@@ -24,41 +23,31 @@ const (
 
 var ErrContentTooLong = fmt.Errorf("content is too long")
 
-// GetBytesPrefix returns the prefix bytes for the given encoding mode, length bits, and codewords count.
-// Mode is one of the EncodingMode constants.
-// Length bits is the number of length bits returned by GetLengthBits.
-// Items count is the number of chars in the data block.
-func GetBytesPrefix(mode encode.EncodingMode, lengthBits, itemsCount int, queue chan encode.ValueBlock) {
-	queue <- encode.ValueBlock{
-		Value: int(mode),
-		Bits:  4,
-	}
-	queue <- encode.ValueBlock{
-		Value: itemsCount,
-		Bits:  lengthBits,
-	}
-}
-
 // CalculateMinVersion returns the minimum version for the given content, encoding mode, and error correction level.
 // Alghorithm: iterate over versions from 1 to 40 and return the first version that can contain the content.
 // Content is the string to encode.
 // Mode is one of the EncodingMode constants.
 // Error correction level is one of the ErrorCorrectionLevel constants.
-func CalculateMinVersion(encodeBlocks []encode.EncodeBlock, ecl ErrorCorrectionLevel) (int, error) {
+func CalculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrectionLevel) (int, error) {
 	dataSize := 0
 	for _, block := range encodeBlocks {
-		dataSize += encode.EncodingModeEncoderMap[block.Mode].Size(utf8.RuneCountInString(block.Data))
+		blockSize, err := block.CalculateDataBitsCount()
+		if err != nil {
+			return 0, fmt.Errorf("failed to calculate data bits count: %w", err)
+		}
+
+		dataSize += blockSize
 	}
 
 	for version := 1; version <= 40; version++ {
 		prefixBits := 0
 
 		for _, block := range encodeBlocks {
-			lengthBits, err := encode.GetLengthBits(version, block.Mode)
+			lengthBits, err := block.GetLengthBits(version)
 			if err != nil {
 				return 0, fmt.Errorf("failed to get length bits: %w", err)
 			}
-			prefixBits += lengthBits + 4
+			prefixBits += lengthBits + block.GetModeBits()
 		}
 
 		size := int(math.Ceil(float64(dataSize+prefixBits) / 8.0))
@@ -106,7 +95,7 @@ func RearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLev
 }
 
 // GetBytesData returns the byte array for the given content, encoding mode, error correction level, and version.
-func GetBytesData(blocks []encode.EncodeBlock, errorLevel ErrorCorrectionLevel, version int) ([]byte, error) {
+func GetBytesData(blocks []*encode.EncodeBlock, errorLevel ErrorCorrectionLevel, version int) ([]byte, error) {
 	allBits := 0
 
 	queue := make(chan encode.ValueBlock, 100)
@@ -115,26 +104,12 @@ func GetBytesData(blocks []encode.EncodeBlock, errorLevel ErrorCorrectionLevel, 
 	go encode.GenerateData(queue, result)
 
 	for _, block := range blocks {
-		dataSize := utf8.RuneCountInString(block.Data)
-
-		lengthBits, err := encode.GetLengthBits(version, block.Mode)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get length bits: %w", err)
-		}
-		GetBytesPrefix(block.Mode, lengthBits, dataSize, queue)
-		dataBlockBits, err := encode.CalculateDataBitsCount(block.Data, block.Mode)
-		if err != nil {
-			return nil, fmt.Errorf("failed to calculate data bits count: %w", err)
-		}
-
-		allBlockBits := dataBlockBits + lengthBits + 4
-		allBits += allBlockBits
-
-		err = encode.EncodeData(block.Data, block.Mode, queue)
+		blockBits, err := block.Encode(version, queue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode data: %w", err)
 		}
 
+		allBits += blockBits
 	}
 
 	close(queue)
