@@ -12,6 +12,7 @@ type KanjiEncoder struct{}
 func (*KanjiEncoder) Encode(content string, queue chan ValueBlock) error {
 	enc := japanese.ShiftJIS.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
+
 	if err != nil {
 		return fmt.Errorf("failed to encode string to kanji: %w", err)
 	}

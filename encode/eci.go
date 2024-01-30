@@ -50,6 +50,8 @@ var AssigmentNumbersEncodings = map[uint]encoding.Encoding{
 	35: utf32.UTF32(utf32.LittleEndian, utf32.IgnoreBOM),
 }
 
+var ErrUnknownAssignmentNumber = fmt.Errorf("unknown assignment number")
+
 type EciEncoder struct {
 	AssignmentNumber uint
 	DataMode         EncodingMode

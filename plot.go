@@ -16,8 +16,7 @@ func PlotRectangle(img *image.RGBA, x, y, size int, clr color.Color) {
 	}
 }
 
-func Plot(data [][]Cell, writer io.Writer) error {
-	scale := 4
+func Plot(data [][]Cell, writer io.Writer, scale int) error {
 	img := image.NewRGBA(image.Rect(0, 0, len(data)*scale, len(data)*scale))
 	for y, row := range data {
 		for x, cell := range row {

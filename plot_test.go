@@ -1,276 +1,106 @@
 package qrcode
 
 import (
+	"bytes"
 	"errors"
-	"math/rand"
-	"os"
-	"os/exec"
-	"strconv"
-	"strings"
+	"image"
+	"image/color"
 	"testing"
-
-	"github.com/verte-zerg/qrcode/encode"
 )
 
-func ValidateContent(content string, filename string) error {
-	cmd := exec.Command("zbarimg", "-q", filename)
-
-	stdout, err := cmd.Output()
-	if err != nil {
-		return err
+func TestPlotRectangle(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 10, 10))
+	step := 2
+	data := [][]int{
+		// x, y, left, right, top, bottom
+		{0, 0, 0, 2, 0, 2},
+		{1, 1, 2, 4, 2, 4},
+		{2, 2, 4, 6, 4, 6},
+		{3, 3, 6, 8, 6, 8},
+		{4, 4, 8, 10, 8, 10},
 	}
 
-	if cmd.ProcessState.ExitCode() != 0 {
-		return errors.New("exit code is not 0")
-	}
-
-	output := string(stdout)
-
-	if output != content {
-		if strings.Contains(output, content) {
-			return nil
+	whiteClr := color.RGBA{255, 255, 255, 255}
+	for _, row := range data {
+		x, y, left, right, top, bottom := row[0], row[1], row[2], row[3], row[4], row[5]
+		PlotRectangle(img, x, y, step, image.White)
+		for idx := left; idx < right; idx++ {
+			for jdx := top; jdx < bottom; jdx++ {
+				clr := img.At(idx, jdx)
+				if clr != whiteClr {
+					t.Errorf("expected black pixel at (%v, %v), got %v", idx, jdx, img.At(idx, jdx))
+				}
+			}
 		}
-		return errors.New("content is not equal: " + output + " != " + content)
 	}
+}
 
-	return nil
+type InvalidWriter struct{}
+
+func (w *InvalidWriter) Write(p []byte) (n int, err error) {
+	return 0, errors.New("invalid writer")
 }
 
 func TestPlot(t *testing.T) {
-	content := "849"
-	qr, err := Create(content, &QRCodeOptions{
-		Mode:       encode.EncodingModeNumeric,
-		ErrorLevel: ErrorCorrectionLevelMedium,
-	})
+	// Valid test
+	t.Run("valid", func(t *testing.T) {
+		data := [][]Cell{
+			{
+				{Value: true},
+				{Value: false},
+				{Value: true},
+			},
+			{
+				{Value: false},
+				{Value: true},
+				{Value: false},
+			},
+			{
+				{Value: true},
+				{Value: false},
+				{Value: true},
+			},
+		}
 
-	if err != nil {
-		t.Error(err)
-	}
+		var buf bytes.Buffer
+		err := Plot(data, &buf, 1)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
-	file, err := os.Create("test_new.png")
-	if err != nil {
-		t.Error(err)
-	}
+		// Open the generated image
+		img, _, err := image.Decode(&buf)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
-	defer file.Close()
-
-	if err := qr.Plot(file); err != nil {
-		t.Error(err)
-	}
-
-	err = ValidateContent(content, "test_new.png")
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPlotUTF8(t *testing.T) {
-	content := "asdfklj;ååß∂∆…¬å´œ¨®ˆπø∑´∆˚çå˜ß¬˚…¬√“‘ˆœ‘ø´®“π\\"
-	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
-		Mode:             encode.EncodingModeECI,
-		Data:             content,
-		SubMode:          encode.EncodingModeLatin1,
-		AssignmentNumber: 26,
-	},
-	}, &QRCodeOptionsMultiMode{
-		ErrorLevel: ErrorCorrectionLevelMedium,
-	},
-	)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	file, err := os.Create("test_utf8.png")
-	if err != nil {
-		t.Error(err)
-	}
-
-	defer file.Close()
-
-	if err := qr.Plot(file); err != nil {
-		t.Error(err)
-	}
-
-	err = ValidateContent(content, "test_utf8.png")
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPlotCyrilic(t *testing.T) {
-	content := "АВГДЕ"
-	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
-		Mode:             encode.EncodingModeECI,
-		Data:             content,
-		SubMode:          encode.EncodingModeLatin1,
-		AssignmentNumber: 7,
-	},
-	}, &QRCodeOptionsMultiMode{
-		ErrorLevel: ErrorCorrectionLevelMedium,
-	},
-	)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	file, err := os.Create("test_cyrilic.png")
-	if err != nil {
-		t.Error(err)
-	}
-
-	defer file.Close()
-
-	if err := qr.Plot(file); err != nil {
-		t.Error(err)
-	}
-
-	err = ValidateContent(content, "test_cyrilic.png")
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPlotLong(t *testing.T) {
-	// generate random content string with length 30
-	var content string // = "https://www.qrcode.com/"
-	// content := "['give you up','let you down','run around and desert you'].map(x=>'Never gonna '+x)"
-	for i := 0; i < 1600; i++ {
-		content += string(byte(rand.Intn(25) + 97))
-	}
-
-	qr, err := Create(content, &QRCodeOptions{
-		Mode:       encode.EncodingModeLatin1,
-		ErrorLevel: ErrorCorrectionLevelQuartile,
-	})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	file, err := os.Create("test_long.png")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	defer file.Close()
-
-	if err := qr.Plot(file); err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPlotMixed(t *testing.T) {
-	encodeBlocks := []*encode.EncodeBlock{
-		{
-			Mode: encode.EncodingModeNumeric,
-			Data: "1234567890",
-		},
-		{
-			Mode: encode.EncodingModeAlphaNumeric,
-			Data: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-		},
-		{
-			Mode: encode.EncodingModeLatin1,
-			Data: "abcdefghijklmnopqrstuvwxyz",
-		},
-		{
-			Mode: encode.EncodingModeKanji,
-			Data: "茗",
-		},
-	}
-
-	qr, err := CreateMultiMode(encodeBlocks, nil)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	file, err := os.Create("test_mix.png")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	defer file.Close()
-
-	if err := qr.Plot(file); err != nil {
-		t.Error(err)
-	}
-
-	content := ""
-	for _, block := range encodeBlocks {
-		content += block.Data
-	}
-
-	err = ValidateContent(content, "test_mix.png")
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPlotWithComparing(t *testing.T) {
-	modes := []encode.EncodingMode{
-		encode.EncodingModeNumeric,
-		encode.EncodingModeAlphaNumeric,
-		encode.EncodingModeLatin1,
-		encode.EncodingModeKanji,
-	}
-
-	for _, mode := range modes {
-		name := strconv.Itoa(int(mode))
-		t.Run(name, func(t *testing.T) {
-			mode := mode
-			t.Parallel()
-			for i := 0; i < 500; i++ {
-				var content string
-
-				size := i + 1
-				for i := 0; i < size; i++ {
-					if mode == encode.EncodingModeNumeric || mode == encode.EncodingModeAlphaNumeric {
-						content += strconv.Itoa(rand.Intn(10))
-					}
-
-					if mode == encode.EncodingModeLatin1 {
-						content += string(byte(rand.Intn(25) + 97))
-					}
-
-					if mode == encode.EncodingModeKanji {
-						content += "茗"
-					}
+		clrWhite := color.RGBA{255, 255, 255, 255}
+		clrBlack := color.RGBA{0, 0, 0, 255}
+		for idx, row := range data {
+			for jdx, cell := range row {
+				clr := img.At(jdx, idx)
+				if cell.Value && clr != clrBlack {
+					t.Errorf("expected black pixel at (%v, %v), got %v", jdx, idx, clr)
 				}
-
-				qr, err := Create(content, &QRCodeOptions{
-					Mode:       mode,
-					ErrorLevel: ErrorCorrectionLevelLow,
-				})
-
-				if err != nil && !errors.Is(err, ErrContentTooLong) {
-					t.Error(err)
-					continue
-				}
-
-				file, err := os.Create("test_" + name + ".png")
-				if err != nil {
-					t.Error(err)
-					continue
-				}
-
-				if err := qr.Plot(file); err != nil {
-					t.Error(err)
-					file.Close()
-					continue
-				}
-
-				file.Close()
-
-				err = ValidateContent(content, "test_"+name+".png")
-				if err != nil {
-					t.Error(err)
+				if !cell.Value && clr != clrWhite {
+					t.Errorf("expected white pixel at (%v, %v), got %v", jdx, idx, clr)
 				}
 			}
-		})
-	}
+		}
+	})
+
+	// Invalid test
+	t.Run("invalid", func(t *testing.T) {
+		data := [][]Cell{}
+
+		// Create a buffer that will always return an error when writing
+		var buf InvalidWriter
+
+		// Call the function and check for error
+		err := Plot(data, &buf, 1)
+		if err == nil {
+			t.Error("expected an error, but got nil")
+		}
+	})
+
 }

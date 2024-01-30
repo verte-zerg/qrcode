@@ -7,6 +7,10 @@ import (
 	"github.com/verte-zerg/qrcode/encode"
 )
 
+const (
+	DEFAULT_SCALE = 4
+)
+
 type QRCode struct {
 	// Content
 	Content string
@@ -95,5 +99,5 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 }
 
 func (qr *QRCode) Plot(writer io.Writer) error {
-	return Plot(qr.data, writer)
+	return Plot(qr.data, writer, DEFAULT_SCALE)
 }

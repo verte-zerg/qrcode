@@ -30,4 +30,4 @@ jobs:
         run: go get .
 
       - name: Run tests
-        run: go test
+        run: go test -coverprofile cover ./...

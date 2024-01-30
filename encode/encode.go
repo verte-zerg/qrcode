@@ -34,6 +34,27 @@ var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
 	EncodingModeKanji:        &KanjiEncoder{},
 }
 
+type ValueBlock struct {
+	Value int
+	Bits  int
+}
+
+type ErrVersionInvalid struct {
+	Version int
+}
+
+func (e ErrVersionInvalid) Error() string {
+	return fmt.Sprintf("version %v invalid, must be between 1 and 40 inclusive", e.Version)
+}
+
+var ErrCannotDeterminEncodingMode = errors.New("cannot determine encoding mode")
+var ErrUnknownEncodingMode = errors.New("unknown encoding mode")
+
+var regexpNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9]+$`)
+var regexpAlphaNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9A-Z $%*+\-./:]+$`)
+var regexpLatin1 *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
+var regexpKanji *regexp.Regexp = regexp.MustCompile(`^[\p{Hiragana}\p{Katakana}\p{Han}]+$`)
+
 type QREncoder interface {
 	Mode() EncodingMode
 	Encode(s string, queue chan ValueBlock) error
@@ -63,21 +84,28 @@ func (b *EncodeBlock) GetSymbolsCount() int {
 }
 
 func (b *EncodeBlock) CalculateDataBitsCount() (int, error) {
+	var enc QREncoder
+
 	if b.Mode == EncodingModeECI {
-		enc := EciEncoder{
+		enc = EciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
-
-		return enc.Size(b.Data), nil
+	} else {
+		var ok bool
+		enc, ok = EncodingModeEncoderMap[b.Mode]
+		if !ok {
+			return 0, ErrUnknownEncodingMode
+		}
 	}
 
-	enc, ok := EncodingModeEncoderMap[b.Mode]
-	if !ok {
-		return 0, ErrUnknownEncodingMode
+	size := enc.Size(b.Data)
+
+	if size == 0 {
+		return 0, fmt.Errorf("failed to calculate data bits count: %w", ErrCannotDeterminEncodingMode)
 	}
 
-	return enc.Size(b.Data), nil
+	return size, nil
 }
 
 func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
@@ -138,6 +166,35 @@ func (b *EncodeBlock) GetBytesPrefix(
 	}
 }
 
+// EncodeData transforms the content to the byte array according to the encoding mode.
+func (b *EncodeBlock) EncodeData(queue chan ValueBlock) error {
+	if b.Mode == EncodingModeECI {
+		enc := EciEncoder{
+			AssignmentNumber: b.AssignmentNumber,
+			DataMode:         b.SubMode,
+		}
+
+		err := enc.Encode(b.Data, queue)
+		if err != nil {
+			return fmt.Errorf("failed to encode data: %w", err)
+		}
+
+		return nil
+	}
+
+	enc, ok := EncodingModeEncoderMap[b.Mode]
+	if !ok {
+		return ErrUnknownEncodingMode
+	}
+
+	err := enc.Encode(b.Data, queue)
+	if err != nil {
+		return fmt.Errorf("failed to encode data: %w", err)
+	}
+
+	return nil
+}
+
 func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 	symbolsCount := b.GetSymbolsCount()
 	lengthBits, err := b.GetLengthBits(version)
@@ -145,13 +202,13 @@ func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to get length bits: %w", err)
 	}
-	b.GetBytesPrefix(lengthBits, symbolsCount, queue)
 	dataBits, err := b.CalculateDataBitsCount()
 	if err != nil {
 		return 0, fmt.Errorf("failed to calculate data bits count: %w", err)
 	}
 
-	err = EncodeData(b, queue)
+	b.GetBytesPrefix(lengthBits, symbolsCount, queue)
+	err = b.EncodeData(queue)
 	if err != nil {
 		return 0, fmt.Errorf("failed to encode data: %w", err)
 	}
@@ -160,27 +217,6 @@ func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 
 	return allBits, nil
 }
-
-type ValueBlock struct {
-	Value int
-	Bits  int
-}
-
-type ErrVersionInvalid struct {
-	Version int
-}
-
-func (e ErrVersionInvalid) Error() string {
-	return fmt.Sprintf("version %v invalid, must be between 1 and 40 inclusive", e.Version)
-}
-
-var ErrCannotDeterminEncodingMode = errors.New("cannot determine encoding mode")
-var ErrUnknownEncodingMode = errors.New("unknown encoding mode")
-
-var regexpNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9]+$`)
-var regexpAlphaNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9A-Z $%*+\-./:]+$`)
-var regexpLatin1 *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
-var regexpKanji *regexp.Regexp = regexp.MustCompile(`^[\p{Hiragana}\p{Katakana}\p{Han}]+$`)
 
 // GetEncodingMode returns the encoding mode for the given string.
 // EncodingMode is one of the EncodingMode constants (EncodingModeNumeric, EncodingModeAlphaNumeric, EncodingModeLatin1, EncodingModeKanji)
@@ -198,35 +234,6 @@ func GetEncodingMode(s string) (EncodingMode, error) {
 		return EncodingModeKanji, nil
 	}
 	return 0, ErrCannotDeterminEncodingMode
-}
-
-// EncodeData transforms the content to the byte array according to the encoding mode.
-func EncodeData(block *EncodeBlock, queue chan ValueBlock) error {
-	if block.Mode == EncodingModeECI {
-		enc := EciEncoder{
-			AssignmentNumber: block.AssignmentNumber,
-			DataMode:         block.SubMode,
-		}
-
-		err := enc.Encode(block.Data, queue)
-		if err != nil {
-			return fmt.Errorf("failed to encode data: %w", err)
-		}
-
-		return nil
-	}
-
-	enc, ok := EncodingModeEncoderMap[block.Mode]
-	if !ok {
-		return ErrUnknownEncodingMode
-	}
-
-	err := enc.Encode(block.Data, queue)
-	if err != nil {
-		return fmt.Errorf("failed to encode string: %w", err)
-	}
-
-	return nil
 }
 
 // GetLengthBits returns the number of length bits for the given version and encoding mode.
