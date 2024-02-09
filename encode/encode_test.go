@@ -89,6 +89,19 @@ func TestLengthBits(t *testing.T) {
 		{27, EncodingModeLatin1, 0, 16},
 		{27, EncodingModeKanji, 0, 12},
 		{27, EncodingModeECI, EncodingModeNumeric, 14},
+
+		// Micro QR
+		{-1, EncodingModeNumeric, 0, 3},
+		{-2, EncodingModeNumeric, 0, 4},
+		{-2, EncodingModeAlphaNumeric, 0, 3},
+		{-3, EncodingModeNumeric, 0, 5},
+		{-3, EncodingModeAlphaNumeric, 0, 4},
+		{-3, EncodingModeLatin1, 0, 4},
+		{-3, EncodingModeKanji, 0, 3},
+		{-4, EncodingModeNumeric, 0, 6},
+		{-4, EncodingModeAlphaNumeric, 0, 5},
+		{-4, EncodingModeLatin1, 0, 5},
+		{-4, EncodingModeKanji, 0, 4},
 	}
 
 	for _, test := range tests {
@@ -127,6 +140,15 @@ func TestLengthBits(t *testing.T) {
 			t.Errorf("Expected %v, got %v", ErrUnknownEncodingMode, err)
 		}
 	})
+
+	// Invalid version for mode
+	t.Run("invalid version for mode", func(t *testing.T) {
+		block := &EncodeBlock{Mode: EncodingModeKanji}
+		_, err := block.GetLengthBits(-1)
+		if err != ErrVersionDoesNotSupportEncodingMode {
+			t.Errorf("Expected %v, got %v", ErrVersionDoesNotSupportEncodingMode, err)
+		}
+	})
 }
 
 func TestPrefixBytes(t *testing.T) {
@@ -134,18 +156,32 @@ func TestPrefixBytes(t *testing.T) {
 		mode             EncodingMode
 		subMode          EncodingMode
 		assignmentNumber uint
+		version          int
 		lengthBits       int
 		codewords        int
 		prefix           []byte
 	}{
-		{EncodingModeNumeric, 0, 0, 10, 8, []byte{0b00010000, 0b00100000}},
-		{EncodingModeNumeric, 0, 0, 10, 9, []byte{0b00010000, 0b00100100}},
-		{EncodingModeNumeric, 0, 0, 12, 10, []byte{0b00010000, 0b00001010}},
-		{EncodingModeNumeric, 0, 0, 14, 11, []byte{0b00010000, 0b00000010, 0b11000000}},
-		{EncodingModeAlphaNumeric, 0, 0, 16, 20, []byte{0b00100000, 0b00000001, 0b01000000}},
-		{EncodingModeKanji, 0, 0, 8, 10, []byte{0b10000000, 0b10100000}},
-		{EncodingModeLatin1, 0, 0, 8, 23, []byte{0b01000001, 0b01110000}},
-		{EncodingModeECI, EncodingModeLatin1, 26, 10, 8, []byte{0b01110001, 0b10100100, 0b00000010, 0b00000000}},
+		{EncodingModeNumeric, 0, 0, 1, 10, 8, []byte{0b00010000, 0b00100000}},
+		{EncodingModeNumeric, 0, 0, 1, 10, 9, []byte{0b00010000, 0b00100100}},
+		{EncodingModeNumeric, 0, 0, 1, 12, 10, []byte{0b00010000, 0b00001010}},
+		{EncodingModeNumeric, 0, 0, 1, 14, 11, []byte{0b00010000, 0b00000010, 0b11000000}},
+		{EncodingModeAlphaNumeric, 0, 0, 1, 16, 20, []byte{0b00100000, 0b00000001, 0b01000000}},
+		{EncodingModeKanji, 0, 0, 1, 8, 10, []byte{0b10000000, 0b10100000}},
+		{EncodingModeLatin1, 0, 0, 1, 8, 23, []byte{0b01000001, 0b01110000}},
+		{EncodingModeECI, EncodingModeLatin1, 26, 1, 10, 8, []byte{0b01110001, 0b10100100, 0b00000010, 0b00000000}},
+
+		// Micro QR
+		{EncodingModeNumeric, 0, 0, -1, 3, 2, []byte{0b01000000}},
+		{EncodingModeNumeric, 0, 0, -2, 4, 3, []byte{0b00011000}},
+		{EncodingModeNumeric, 0, 0, -3, 5, 4, []byte{0b00001000}},
+		{EncodingModeNumeric, 0, 0, -4, 6, 5, []byte{0b00000010, 0b10000000}},
+		{EncodingModeAlphaNumeric, 0, 0, -2, 3, 2, []byte{0b10100000}},
+		{EncodingModeAlphaNumeric, 0, 0, -3, 4, 3, []byte{0b01001100}},
+		{EncodingModeAlphaNumeric, 0, 0, -4, 5, 4, []byte{0b00100100}},
+		{EncodingModeLatin1, 0, 0, -3, 4, 3, []byte{0b10001100}},
+		{EncodingModeLatin1, 0, 0, -4, 5, 4, []byte{0b01000100}},
+		{EncodingModeKanji, 0, 0, -3, 3, 2, []byte{0b11010000}},
+		{EncodingModeKanji, 0, 0, -4, 4, 3, []byte{0b01100110}},
 	}
 
 	for _, test := range tests {
@@ -159,7 +195,7 @@ func TestPrefixBytes(t *testing.T) {
 				SubMode:          test.subMode,
 				AssignmentNumber: test.assignmentNumber,
 			}
-			block.GetBytesPrefix(test.lengthBits, test.codewords, queue)
+			block.GetBytesPrefix(test.version, test.lengthBits, test.codewords, queue)
 			close(queue)
 			data := <-result
 
@@ -253,21 +289,26 @@ func TestCalculateDataBitsCount(t *testing.T) {
 
 func TestGetModeBits(t *testing.T) {
 	tests := []struct {
-		mode EncodingMode
-		bits int
+		mode    EncodingMode
+		version int
+		bits    int
 	}{
-		{EncodingModeNumeric, 4},
-		{EncodingModeAlphaNumeric, 4},
-		{EncodingModeLatin1, 4},
-		{EncodingModeKanji, 4},
-		{EncodingModeECI, 16},
+		{EncodingModeNumeric, 1, 4},
+		{EncodingModeAlphaNumeric, 1, 4},
+		{EncodingModeLatin1, 1, 4},
+		{EncodingModeKanji, 1, 4},
+		{EncodingModeECI, 1, 16},
+
+		// Micro QR
+		{EncodingModeNumeric, -1, 0},
+		{EncodingModeKanji, -4, 3},
 	}
 
 	for _, test := range tests {
 		name := fmt.Sprintf("mode %v", test.mode)
 		t.Run(name, func(t *testing.T) {
 			b := &EncodeBlock{Mode: test.mode}
-			if bits := b.GetModeBits(); bits != test.bits {
+			if bits := b.GetModeBits(test.version); bits != test.bits {
 				t.Errorf("Expected %b, got %b", test.bits, bits)
 			}
 		})

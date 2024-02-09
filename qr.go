@@ -36,9 +36,14 @@ type QRCodeOptionsMultiMode struct {
 	// Level is the error correction level.
 	// Default: ErrorCorrectionLevelLow.
 	ErrorLevel ErrorCorrectionLevel
+
 	// Version is the version of the QR Code.
 	// Default: calculated based on the content.
 	Version int
+
+	// Enable micro QR code
+	// Default: false
+	MicroQR bool
 }
 
 func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error) {
@@ -53,7 +58,7 @@ func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMo
 	version := options.Version
 
 	if version == 0 {
-		version, err = CalculateMinVersion(blocks, qrCodeOptions.ErrorLevel)
+		version, err = CalculateMinVersion(blocks, qrCodeOptions.ErrorLevel, options.MicroQR)
 		if err != nil {
 			return nil, fmt.Errorf("failed to calculate min version: %w", err)
 		}
@@ -73,7 +78,6 @@ func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMo
 	}, nil
 }
 
-// Implement func Create based on CreateMultiMode
 func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 	if options == nil {
 		options = &QRCodeOptions{}

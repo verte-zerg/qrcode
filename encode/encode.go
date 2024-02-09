@@ -19,12 +19,16 @@ const (
 
 // Count of length bits for each version and encoding mode.
 // Structure: [encoding mode][version range number]
-// Version range number is 0 for versions 1-9, 1 for versions 10-26, 2 for versions 27-40.
-var EncodingModeLengthMap = map[EncodingMode][3]int{
-	EncodingModeNumeric:      {10, 12, 14},
-	EncodingModeAlphaNumeric: {9, 11, 13},
-	EncodingModeLatin1:       {8, 16, 16},
-	EncodingModeKanji:        {8, 10, 12},
+// Version range number is:
+// * 0-3 for versions M1-M4,
+// * 4 for versions 1-9
+// * 5 for versions 10-26
+// * 6 for versions 27-40.
+var EncodingModeLengthMap = map[EncodingMode][7]int{
+	EncodingModeNumeric:      {3, 4, 5, 6, 10, 12, 14},
+	EncodingModeAlphaNumeric: {0, 3, 4, 5, 9, 11, 13},
+	EncodingModeLatin1:       {0, 0, 4, 5, 8, 16, 16},
+	EncodingModeKanji:        {0, 0, 3, 4, 8, 10, 12},
 }
 
 var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
@@ -32,6 +36,33 @@ var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
 	EncodingModeAlphaNumeric: &AlphaNumericEncoder{},
 	EncodingModeLatin1:       &Latin1Encoder{},
 	EncodingModeKanji:        &KanjiEncoder{},
+}
+
+var ModeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
+	EncodingModeNumeric: {
+		{Value: 0, Bits: 0},
+		{Value: 0, Bits: 1},
+		{Value: 0, Bits: 2},
+		{Value: 0, Bits: 3},
+	},
+	EncodingModeAlphaNumeric: {
+		{Value: 0, Bits: 0},
+		{Value: 1, Bits: 1},
+		{Value: 1, Bits: 2},
+		{Value: 1, Bits: 3},
+	},
+	EncodingModeLatin1: {
+		{Value: 0, Bits: 0},
+		{Value: 0, Bits: 0},
+		{Value: 2, Bits: 2},
+		{Value: 2, Bits: 3},
+	},
+	EncodingModeKanji: {
+		{Value: 0, Bits: 0},
+		{Value: 0, Bits: 0},
+		{Value: 3, Bits: 2},
+		{Value: 3, Bits: 3},
+	},
 }
 
 type ValueBlock struct {
@@ -49,6 +80,7 @@ func (e ErrVersionInvalid) Error() string {
 
 var ErrCannotDeterminEncodingMode = errors.New("cannot determine encoding mode")
 var ErrUnknownEncodingMode = errors.New("unknown encoding mode")
+var ErrVersionDoesNotSupportEncodingMode = errors.New("version does not support encoding mode")
 
 var regexpNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9]+$`)
 var regexpAlphaNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9A-Z $%*+\-./:]+$`)
@@ -109,7 +141,7 @@ func (b *EncodeBlock) CalculateDataBitsCount() (int, error) {
 }
 
 func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
-	if version < 1 || version > 40 {
+	if version < -4 || version > 40 || version == 0 {
 		return 0, ErrVersionInvalid{version}
 	}
 
@@ -123,16 +155,28 @@ func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
 		return 0, ErrUnknownEncodingMode
 	}
 
+	if version <= 0 {
+		bits := dataLength[-version-1]
+		if bits == 0 {
+			return 0, ErrVersionDoesNotSupportEncodingMode
+		}
+		return bits, nil
+	}
+
 	if version <= 9 {
-		return dataLength[0], nil
+		return dataLength[4], nil
 	}
 	if version <= 26 {
-		return dataLength[1], nil
+		return dataLength[5], nil
 	}
-	return dataLength[2], nil
+	return dataLength[6], nil
 }
 
-func (b *EncodeBlock) GetModeBits() int {
+func (b *EncodeBlock) GetModeBits(version int) int {
+	if version < 0 {
+		return -version - 1
+	}
+
 	if b.Mode == EncodingModeECI {
 		return 16
 	}
@@ -140,13 +184,18 @@ func (b *EncodeBlock) GetModeBits() int {
 }
 
 func (b *EncodeBlock) GetBytesPrefix(
+	version,
 	lengthBits,
 	itemsCount int,
 	queue chan ValueBlock,
 ) {
-	queue <- ValueBlock{
-		Value: int(b.Mode),
-		Bits:  4,
+	if version < 0 {
+		queue <- ModeVersionValueBlockMap[b.Mode][-version-1]
+	} else {
+		queue <- ValueBlock{
+			Value: int(b.Mode),
+			Bits:  4,
+		}
 	}
 
 	if b.Mode == EncodingModeECI {
@@ -168,23 +217,18 @@ func (b *EncodeBlock) GetBytesPrefix(
 
 // EncodeData transforms the content to the byte array according to the encoding mode.
 func (b *EncodeBlock) EncodeData(queue chan ValueBlock) error {
+	var enc QREncoder
 	if b.Mode == EncodingModeECI {
-		enc := EciEncoder{
+		enc = EciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
-
-		err := enc.Encode(b.Data, queue)
-		if err != nil {
-			return fmt.Errorf("failed to encode data: %w", err)
+	} else {
+		var ok bool
+		enc, ok = EncodingModeEncoderMap[b.Mode]
+		if !ok {
+			return ErrUnknownEncodingMode
 		}
-
-		return nil
-	}
-
-	enc, ok := EncodingModeEncoderMap[b.Mode]
-	if !ok {
-		return ErrUnknownEncodingMode
 	}
 
 	err := enc.Encode(b.Data, queue)
@@ -207,13 +251,13 @@ func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 		return 0, fmt.Errorf("failed to calculate data bits count: %w", err)
 	}
 
-	b.GetBytesPrefix(lengthBits, symbolsCount, queue)
+	b.GetBytesPrefix(version, lengthBits, symbolsCount, queue)
 	err = b.EncodeData(queue)
 	if err != nil {
 		return 0, fmt.Errorf("failed to encode data: %w", err)
 	}
 
-	allBits := dataBits + lengthBits + b.GetModeBits()
+	allBits := dataBits + lengthBits + b.GetModeBits(version)
 
 	return allBits, nil
 }
@@ -245,6 +289,10 @@ func GenerateData(queue chan ValueBlock, result chan []byte) {
 	freeBits := 0
 
 	for v := range queue {
+		if v.Bits == 0 {
+			continue
+		}
+
 		var b byte
 
 		blockSize := v.Bits

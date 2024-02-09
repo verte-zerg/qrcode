@@ -11,7 +11,13 @@ func CalculateEDCPoly(data []byte, codewords int) []byte {
 func GetEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
 	var buf []byte
 
-	blocks := ErrorCorrectionBlocks[version][errorLevel]
+	var blocks []ECBlock
+	if version < 0 {
+		blocks = MicroErrorCorrectionBlocks[-version][errorLevel]
+	} else {
+		blocks = ErrorCorrectionBlocks[version][errorLevel]
+	}
+
 	var blocksData [][]byte
 	dataIdx := 0
 	for _, block := range blocks {
@@ -40,6 +46,16 @@ func GetEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byt
 	}
 
 	return buf
+}
+
+// Count of error correction code words for Micro QR Code version and error correction level
+// Structure: [version][error correction level]
+var MicroErrorCorrectionCodeWords = [5][4]int{
+	{0, 0, 0, 0}, // added to shift the index by 1
+	{2, 0, 0, 0},
+	{5, 6, 0, 0},
+	{6, 8, 0, 0},
+	{8, 10, 14, 0},
 }
 
 // Count of error correction code words for each version and error correction level
@@ -98,10 +114,25 @@ type ECBlock struct {
 // ['give you up','let you down','run around and desert you'].map(x=>'Never gonna '+x)
 // Never gonna give you upNever gonna let you downNever gonna run around and desert you
 
+// Error correction blocks for Micro QR Code version and error correction level
+// Structure: [version][error correction level][block]
+//
+// (5,3,0)Ь
+// (10,5,1 )Ь
+// (10,4,2)Ь (17,11,2)Ь (17,9,4)
+// (24,16,3)Ь (24,14,5) (24,10,7)
+var MicroErrorCorrectionBlocks = [5][4][]ECBlock{
+	{{}, {}, {}, {}}, // added to shift the index by 1
+	{{{1, 5, 3, 0}}, {}, {}, {}},
+	{{{1, 10, 5, 1}}, {{1, 10, 4, 2}}, {}, {}},
+	{{{1, 17, 11, 2}}, {{1, 17, 9, 4}}, {}, {}},
+	{{{1, 24, 16, 3}}, {{1, 24, 14, 5}}, {{1, 24, 10, 7}}, {}},
+}
+
 // Error correction blocks for each version and error correction level
 // Structure: [version][error correction level][block]
 var ErrorCorrectionBlocks = [41][4][]ECBlock{
-	{{{0, 0, 0, 0}}, {{0, 0, 0, 0}}, {{0, 0, 0, 0}}, {{0, 0, 0, 0}}},
+	{{}, {}, {}, {}}, // added to shift the index by 1
 	{{{1, 26, 19, 2}}, {{1, 26, 16, 4}}, {{1, 26, 13, 6}}, {{1, 26, 9, 8}}},
 	{{{1, 44, 34, 4}}, {{1, 44, 28, 8}}, {{1, 44, 22, 11}}, {{1, 44, 16, 14}}},
 	{{{1, 70, 55, 7}}, {{1, 70, 44, 13}}, {{2, 35, 17, 9}}, {{2, 35, 13, 11}}},

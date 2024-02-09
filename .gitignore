@@ -3,9 +3,17 @@
 *.py
 *.ipynb
 .python-version
+.mypy_cache
 
 # Mac
 .DS_Store
 
 # Images
 *.png
+
+# Profiling
+*.prof
+*.pprof
+
+# VSCode
+.vscode

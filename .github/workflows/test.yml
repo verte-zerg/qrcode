@@ -4,22 +4,56 @@ on:
   push:
     branches:
       - main
-      - dev
+      - feature/add-micro-qr-codes
   pull_request:
     branches:
       - main
-      - dev
+      - feature/add-micro-qr-codes
 
 jobs:
-  test:
+  build_test_dependency:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install zbarimg
-        run: sudo apt-get install -y zbar-tools
-
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          repository: verte-zerg/qrcode-zxing-tests
+
+      - name: Set up Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install conan
+
+      - name: Build
+        run: sh build.sh
+
+      - name: Save build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-binaries
+          path: |
+            build/Reader
+            build/RawReader
+          if-no-files-found: error
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build_test_dependency
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-binaries
+
+      - name: Add execute permission to binaries
+        run: |
+          chmod +x Reader RawReader
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -30,4 +64,4 @@ jobs:
         run: go get .
 
       - name: Run tests
-        run: go test -coverprofile cover ./...
+        run: go test -v

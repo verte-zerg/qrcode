@@ -11,6 +11,16 @@ var (
 		func(row, col int) bool { return ((row*col)%2+(row*col)%3)%2 == 0 },
 		func(row, col int) bool { return ((row*col)%3+(row+col)%2)%2 == 0 },
 	}
+
+	microToNormalMask = []struct {
+		microMask  int
+		normalMask int
+	}{
+		{0, 1},
+		{1, 4},
+		{2, 6},
+		{3, 7},
+	}
 )
 
 func ApplyMask(data [][]Cell, maskType int) {
@@ -198,19 +208,31 @@ func DetermineBestMask(data [][]Cell, errorCorrectionLevel ErrorCorrectionLevel)
 	minPenalty := 1<<31 - 1
 	bestMask := 0
 	for maskType := 0; maskType < 8; maskType++ {
-		copyData := make([][]Cell, len(data))
-		for idx, row := range data {
-			copyData[idx] = make([]Cell, len(row))
-			copy(copyData[idx], row)
-		}
-
-		FillFormatBlock(copyData, errorCorrectionLevel, maskType)
-		ApplyMask(copyData, maskType)
-		penalty := CalculatePenalty(copyData)
+		FillFormatBlock(data, errorCorrectionLevel, maskType)
+		ApplyMask(data, maskType)
+		penalty := CalculatePenalty(data)
 		if penalty < minPenalty {
 			minPenalty = penalty
 			bestMask = maskType
 		}
+		ApplyMask(data, maskType)
+	}
+
+	return bestMask
+}
+
+func DetermineBestMaskMicro(data [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel) int {
+	minPenalty := 1<<31 - 1
+	bestMask := 0
+	for _, maskMap := range microToNormalMask {
+		FillFormatBlockMicro(data, version, errorCorrectionLevel, maskMap.microMask)
+		ApplyMask(data, maskMap.normalMask)
+		penalty := CalculatePenalty(data)
+		if penalty < minPenalty {
+			minPenalty = penalty
+			bestMask = maskMap.microMask
+		}
+		ApplyMask(data, maskMap.normalMask)
 	}
 
 	return bestMask
