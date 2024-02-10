@@ -25,7 +25,7 @@ func TestEciEncoder_Encode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
 				DataMode:         EncodingModeLatin1,
 			}
@@ -73,7 +73,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
 				DataMode:         EncodingModeLatin1,
 			}
@@ -86,7 +86,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	// Invalid assignment number
 	t.Run("invalid assignment number", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 100,
 			DataMode:         EncodingModeLatin1,
 		}
@@ -98,7 +98,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	// Invalid content
 	t.Run("invalid content", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 4,
 			DataMode:         EncodingModeLatin1,
 		}
@@ -129,7 +129,7 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
 				DataMode:         EncodingModeLatin1,
 			}
@@ -143,7 +143,7 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	// Invalid assignment number
 	t.Run("invalid assignment number", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 100,
 			DataMode:         EncodingModeLatin1,
 		}
@@ -155,7 +155,7 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	// Invalid content
 	t.Run("invalid content", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 4,
 			DataMode:         EncodingModeLatin1,
 		}
@@ -167,7 +167,7 @@ func TestEciEncoder_Size(t *testing.T) {
 }
 
 func TestEciEncoder_Mode(t *testing.T) {
-	eci := &EciEncoder{}
+	eci := &eciEncoder{}
 	if eci.Mode() != EncodingModeECI {
 		t.Errorf("expected %v, got %v", EncodingModeECI, eci.Mode())
 	}

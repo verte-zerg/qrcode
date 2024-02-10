@@ -5,10 +5,10 @@ import (
 	"unicode/utf8"
 )
 
-type AlphaNumericEncoder struct{}
+type alphaNumericEncoder struct{}
 
-func (*AlphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {
-	enc := &AlphaNumericConverter{}
+func (*alphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {
+	enc := &alphaNumericConverter{}
 	encoded, err := enc.Convert(content)
 	if err != nil {
 		return fmt.Errorf("failed to convert string to alphanumeric: %w", err)
@@ -37,13 +37,13 @@ func (*AlphaNumericEncoder) Encode(content string, queue chan ValueBlock) error 
 	return nil
 }
 
-func (*AlphaNumericEncoder) CanEncode(content string) bool {
-	enc := &AlphaNumericConverter{}
+func (*alphaNumericEncoder) CanEncode(content string) bool {
+	enc := &alphaNumericConverter{}
 	_, err := enc.Convert(content)
 	return err == nil
 }
 
-func (*AlphaNumericEncoder) Size(content string) int {
+func (*alphaNumericEncoder) Size(content string) int {
 	length := utf8.RuneCountInString(content)
 	duplets := length / 2
 	tail := length % 2
@@ -55,6 +55,6 @@ func (*AlphaNumericEncoder) Size(content string) int {
 	return duplets*11 + extra
 }
 
-func (*AlphaNumericEncoder) Mode() EncodingMode {
+func (*alphaNumericEncoder) Mode() EncodingMode {
 	return EncodingModeAlphaNumeric
 }

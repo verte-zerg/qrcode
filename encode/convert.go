@@ -52,9 +52,9 @@ var utfToAlphaNumeric = map[rune]rune{
 	':': 44,
 }
 
-type AlphaNumericConverter struct{}
+type alphaNumericConverter struct{}
 
-func (e *AlphaNumericConverter) Convert(s string) ([]byte, error) {
+func (e *alphaNumericConverter) Convert(s string) ([]byte, error) {
 	var result []byte
 
 	for _, r := range s {

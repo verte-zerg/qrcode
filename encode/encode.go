@@ -24,21 +24,21 @@ const (
 // * 4 for versions 1-9
 // * 5 for versions 10-26
 // * 6 for versions 27-40.
-var EncodingModeLengthMap = map[EncodingMode][7]int{
+var encodingModeLengthMap = map[EncodingMode][7]int{
 	EncodingModeNumeric:      {3, 4, 5, 6, 10, 12, 14},
 	EncodingModeAlphaNumeric: {0, 3, 4, 5, 9, 11, 13},
 	EncodingModeLatin1:       {0, 0, 4, 5, 8, 16, 16},
 	EncodingModeKanji:        {0, 0, 3, 4, 8, 10, 12},
 }
 
-var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
-	EncodingModeNumeric:      &NumericEncoder{},
-	EncodingModeAlphaNumeric: &AlphaNumericEncoder{},
-	EncodingModeLatin1:       &Latin1Encoder{},
-	EncodingModeKanji:        &KanjiEncoder{},
+var encodingModeEncoderMap = map[EncodingMode]QREncoder{
+	EncodingModeNumeric:      &numericEncoder{},
+	EncodingModeAlphaNumeric: &alphaNumericEncoder{},
+	EncodingModeLatin1:       &latin1Encoder{},
+	EncodingModeKanji:        &kanjiEncoder{},
 }
 
-var ModeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
+var modeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
 	EncodingModeNumeric: {
 		{Value: 0, Bits: 0},
 		{Value: 0, Bits: 1},
@@ -105,7 +105,7 @@ type EncodeBlock struct {
 
 func (b *EncodeBlock) GetSymbolsCount() int {
 	if b.Mode == EncodingModeECI {
-		enc := EciEncoder{
+		enc := eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
@@ -119,13 +119,13 @@ func (b *EncodeBlock) CalculateDataBitsCount() (int, error) {
 	var enc QREncoder
 
 	if b.Mode == EncodingModeECI {
-		enc = EciEncoder{
+		enc = eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
 	} else {
 		var ok bool
-		enc, ok = EncodingModeEncoderMap[b.Mode]
+		enc, ok = encodingModeEncoderMap[b.Mode]
 		if !ok {
 			return 0, ErrUnknownEncodingMode
 		}
@@ -150,7 +150,7 @@ func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
 		mode = b.SubMode
 	}
 
-	dataLength, ok := EncodingModeLengthMap[mode]
+	dataLength, ok := encodingModeLengthMap[mode]
 	if !ok {
 		return 0, ErrUnknownEncodingMode
 	}
@@ -190,7 +190,7 @@ func (b *EncodeBlock) GetBytesPrefix(
 	queue chan ValueBlock,
 ) {
 	if version < 0 {
-		queue <- ModeVersionValueBlockMap[b.Mode][-version-1]
+		queue <- modeVersionValueBlockMap[b.Mode][-version-1]
 	} else {
 		queue <- ValueBlock{
 			Value: int(b.Mode),
@@ -219,13 +219,13 @@ func (b *EncodeBlock) GetBytesPrefix(
 func (b *EncodeBlock) EncodeData(queue chan ValueBlock) error {
 	var enc QREncoder
 	if b.Mode == EncodingModeECI {
-		enc = EciEncoder{
+		enc = eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
 	} else {
 		var ok bool
-		enc, ok = EncodingModeEncoderMap[b.Mode]
+		enc, ok = encodingModeEncoderMap[b.Mode]
 		if !ok {
 			return ErrUnknownEncodingMode
 		}

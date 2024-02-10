@@ -12,13 +12,8 @@ const (
 	CellTypeDelimiter
 )
 
-type VersionBlockInfo struct {
-	ErrorCorrectionLevel ErrorCorrectionLevel
-	MaskPattern          int
-}
-
 var (
-	SearchPattern = [7][7]bool{
+	searchPattern = [7][7]bool{
 		{true, true, true, true, true, true, true},
 		{true, false, false, false, false, false, true},
 		{true, false, true, true, true, false, true},
@@ -28,7 +23,7 @@ var (
 		{true, true, true, true, true, true, true},
 	}
 
-	AlignmentPattern = [5][5]bool{
+	alignmentPattern = [5][5]bool{
 		{true, true, true, true, true},
 		{true, false, false, false, true},
 		{true, false, true, false, true},
@@ -36,7 +31,7 @@ var (
 		{true, true, true, true, true},
 	}
 
-	AlignmentPositions = [41][]int{
+	alignmentPositions = [41][]int{
 		{}, // added for shift versions, as first version has index 1
 		{},
 		{6, 18},
@@ -80,9 +75,9 @@ var (
 		{6, 30, 58, 86, 114, 142, 170},
 	}
 
-	// VersionValues is a table of version information for each version.
+	// versionValues is a table of version information for each version.
 	// The first index is the version number 7, as the version block starts at version 7.
-	VersionValues = [34][18]byte{
+	versionValues = [34][18]byte{
 		{0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0},
 		{0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0},
 		{0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1},
@@ -119,9 +114,9 @@ var (
 		{1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1},
 	}
 
-	// MicroFormatValues is a table of format information for each version, error correction level, and mask pattern.
+	// microFormatValues is a table of format information for each version, error correction level, and mask pattern.
 	// Structure: [version][error correction level][mask pattern][15 bits]
-	MicroFormatValues = [5][4][4][15]byte{
+	microFormatValues = [5][4][4][15]byte{
 		{}, // added for shift versions, as first version has index 1
 		{
 			{
@@ -181,9 +176,9 @@ var (
 		},
 	}
 
-	// FormatValues is a table of format information for each error correction level and mask pattern.
+	// formatValues is a table of format information for each error correction level and mask pattern.
 	// Structure: [error correction level][mask pattern][15 bits]
-	FormatValues = [4][8][15]byte{
+	formatValues = [4][8][15]byte{
 		{
 			{1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0},
 			{1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1},
@@ -232,7 +227,7 @@ type Cell struct {
 	Type  CellType
 }
 
-type Position struct {
+type position struct {
 	X, Y        int
 	Size        int
 	Direction   int
@@ -240,7 +235,7 @@ type Position struct {
 	evenReverse bool
 }
 
-func (p *Position) Next() {
+func (p *position) Next() {
 	even := (p.X%2 == 0) != p.evenReverse
 
 	if even {
@@ -266,18 +261,18 @@ func (p *Position) Next() {
 	}
 }
 
-func GetSize(version int) int {
+func getSize(version int) int {
 	if version < 0 {
 		return 9 + (-version)*2
 	}
 	return 17 + 4*version
 }
 
-func FillSearchPattern(version int, field [][]Cell) {
+func fillSearchPattern(version int, field [][]Cell) {
 	size := len(field)
 	for i := 0; i < 7; i++ {
 		for j := 0; j < 7; j++ {
-			value := SearchPattern[i][j]
+			value := searchPattern[i][j]
 			field[i][j] = Cell{Value: value, Type: CellTypeSearchPattern}
 
 			if version > 0 {
@@ -304,7 +299,7 @@ func FillSearchPattern(version int, field [][]Cell) {
 	}
 }
 
-func FillSyncPattern(version int, field [][]Cell) {
+func fillSyncPattern(version int, field [][]Cell) {
 	size := len(field)
 	value := true
 
@@ -324,8 +319,8 @@ func FillSyncPattern(version int, field [][]Cell) {
 	}
 }
 
-func FillAlignmentPattern(field [][]Cell, version int) {
-	positions := AlignmentPositions[version]
+func fillAlignmentPattern(field [][]Cell, version int) {
+	positions := alignmentPositions[version]
 	for idx, i := range positions {
 		for jdx, j := range positions {
 			if (idx == 0 && jdx == 0) || (idx == 0 && jdx == len(positions)-1) || (idx == len(positions)-1 && jdx == 0) {
@@ -333,19 +328,19 @@ func FillAlignmentPattern(field [][]Cell, version int) {
 			}
 			for k := 0; k < 5; k++ {
 				for l := 0; l < 5; l++ {
-					field[i+k-2][j+l-2] = Cell{Value: AlignmentPattern[k][l], Type: CellTypeAlignmentPattern}
+					field[i+k-2][j+l-2] = Cell{Value: alignmentPattern[k][l], Type: CellTypeAlignmentPattern}
 				}
 			}
 		}
 	}
 }
 
-func FillVersionBlock(field [][]Cell, version int) {
+func fillVersionBlock(field [][]Cell, version int) {
 	size := len(field)
 	if version < 7 {
 		return
 	}
-	values := VersionValues[version-7]
+	values := versionValues[version-7]
 	for i := 0; i < 6; i++ {
 		for j := 0; j < 3; j++ {
 			field[size-11+j][i] = Cell{Value: values[i*3+j] == 1, Type: CellTypeVersion}
@@ -354,9 +349,9 @@ func FillVersionBlock(field [][]Cell, version int) {
 	}
 }
 
-func FillFormatBlock(field [][]Cell, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
+func fillFormatBlock(field [][]Cell, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
 	size := len(field)
-	values := FormatValues[errorCorrectionLevel][maskPattern]
+	values := formatValues[errorCorrectionLevel][maskPattern]
 	for i := 0; i < 8; i++ {
 		shiftDelimiter := 0
 		if i > 5 {
@@ -379,7 +374,7 @@ func FillFormatBlock(field [][]Cell, errorCorrectionLevel ErrorCorrectionLevel, 
 	field[size-8][8] = Cell{Value: true, Type: CellTypeFormat}
 }
 
-func FillEmptyFormatBlock(field [][]Cell) {
+func fillEmptyFormatBlock(field [][]Cell) {
 	size := len(field)
 	for i := 0; i < 8; i++ {
 		shiftDelimiter := 0
@@ -403,8 +398,8 @@ func FillEmptyFormatBlock(field [][]Cell) {
 	field[size-8][8] = Cell{Value: true, Type: CellTypeFormat}
 }
 
-func FillFormatBlockMicro(field [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
-	values := MicroFormatValues[-version][errorCorrectionLevel][maskPattern]
+func fillFormatBlockMicro(field [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
+	values := microFormatValues[-version][errorCorrectionLevel][maskPattern]
 	for i := 0; i < 8; i++ {
 		// up -> down, on the right side of the top-left search pattern
 		field[i+1][8] = Cell{Value: values[14-i] == 1, Type: CellTypeFormat}
@@ -414,7 +409,7 @@ func FillFormatBlockMicro(field [][]Cell, version int, errorCorrectionLevel Erro
 	}
 }
 
-func FillEmptyFormatBlockMicro(field [][]Cell) {
+func fillEmptyFormatBlockMicro(field [][]Cell) {
 	for i := 0; i < 8; i++ {
 		// up -> down, on the right side of the top-left search pattern
 		field[i+1][8] = Cell{Value: false, Type: CellTypeFormat}
@@ -424,10 +419,10 @@ func FillEmptyFormatBlockMicro(field [][]Cell) {
 	}
 }
 
-func FillDataBlock(field [][]Cell, data []byte) {
+func fillDataBlock(field [][]Cell, data []byte) {
 	size := len(field)
 	bitIdx := 0
-	pos := Position{X: size - 1, Y: size - 1, Size: size, Direction: -1}
+	pos := position{X: size - 1, Y: size - 1, Size: size, Direction: -1}
 	for byteIdx := 0; byteIdx < len(data); {
 		if field[pos.Y][pos.X].Type == CellTypeData {
 			field[pos.Y][pos.X] = Cell{Value: data[byteIdx]&(1<<uint(7-bitIdx)) != 0, Type: CellTypeData}
@@ -441,10 +436,10 @@ func FillDataBlock(field [][]Cell, data []byte) {
 	}
 }
 
-func FillDataBlockMicro(field [][]Cell, data []byte, version int, errorLevel ErrorCorrectionLevel) {
+func fillDataBlockMicro(field [][]Cell, data []byte, version int, errorLevel ErrorCorrectionLevel) {
 	size := len(field)
 	bitIdx := 0
-	pos := Position{X: size - 1, Y: size - 1, Size: size, Direction: -1, Micro: true}
+	pos := position{X: size - 1, Y: size - 1, Size: size, Direction: -1, Micro: true}
 	for byteIdx := 0; byteIdx < len(data); {
 		if field[pos.Y][pos.X].Type == CellTypeData {
 			field[pos.Y][pos.X] = Cell{Value: data[byteIdx]&(1<<uint(7-bitIdx)) != 0, Type: CellTypeData}
@@ -470,45 +465,45 @@ func FillDataBlockMicro(field [][]Cell, data []byte, version int, errorLevel Err
 	}
 }
 
-func GenerateField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
+func generateField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
 	if version < 0 {
-		return GenerateMicroQRField(data, version, errorCorrectionLevel)
+		return generateMicroQRField(data, version, errorCorrectionLevel)
 	}
-	size := GetSize(version)
+	size := getSize(version)
 	field := make([][]Cell, size)
 	for i := range field {
 		field[i] = make([]Cell, size)
 	}
 
-	FillSearchPattern(version, field)
-	FillSyncPattern(version, field)
-	FillAlignmentPattern(field, version)
-	FillVersionBlock(field, version)
-	FillEmptyFormatBlock(field)
-	FillDataBlock(field, data)
+	fillSearchPattern(version, field)
+	fillSyncPattern(version, field)
+	fillAlignmentPattern(field, version)
+	fillVersionBlock(field, version)
+	fillEmptyFormatBlock(field)
+	fillDataBlock(field, data)
 
-	bestMask := DetermineBestMask(field, errorCorrectionLevel)
-	FillFormatBlock(field, errorCorrectionLevel, bestMask)
-	ApplyMask(field, bestMask)
+	bestMask := determineBestMask(field, errorCorrectionLevel)
+	fillFormatBlock(field, errorCorrectionLevel, bestMask)
+	applyMask(field, bestMask)
 
 	return field
 }
 
-func GenerateMicroQRField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
-	size := GetSize(version)
+func generateMicroQRField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
+	size := getSize(version)
 	field := make([][]Cell, size)
 	for i := range field {
 		field[i] = make([]Cell, size)
 	}
 
-	FillSearchPattern(version, field)
-	FillSyncPattern(version, field)
-	FillEmptyFormatBlockMicro(field)
-	FillDataBlockMicro(field, data, version, errorCorrectionLevel)
+	fillSearchPattern(version, field)
+	fillSyncPattern(version, field)
+	fillEmptyFormatBlockMicro(field)
+	fillDataBlockMicro(field, data, version, errorCorrectionLevel)
 
-	bestMask := DetermineBestMaskMicro(field, version, errorCorrectionLevel)
-	FillFormatBlockMicro(field, version, errorCorrectionLevel, bestMask)
-	ApplyMask(field, microToNormalMask[bestMask].normalMask)
+	bestMask := determineBestMaskMicro(field, version, errorCorrectionLevel)
+	fillFormatBlockMicro(field, version, errorCorrectionLevel, bestMask)
+	applyMask(field, microToNormalMask[bestMask].normalMask)
 
 	return field
 }

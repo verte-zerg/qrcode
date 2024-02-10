@@ -82,14 +82,14 @@ func TestCalculatePenaltyRule1(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		penalty := CalculatePenaltyRule1(test.data)
+		penalty := calculatePenaltyRule1(test.data)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule1 failed, expected %d, got %d", test.expected, penalty)
 		}
 
 		transposedData := TransposeMatrix(test.data)
-		penalty = CalculatePenaltyRule1(transposedData)
+		penalty = calculatePenaltyRule1(transposedData)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule1 failed, expected %d, got %d", test.expected, penalty)
@@ -141,7 +141,7 @@ func TestCalculatePenaltyRule2(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		penalty := CalculatePenaltyRule2(test.data)
+		penalty := calculatePenaltyRule2(test.data)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule2 failed, expected %d, got %d", test.expected, penalty)
@@ -149,7 +149,7 @@ func TestCalculatePenaltyRule2(t *testing.T) {
 
 		transposedData := TransposeMatrix(test.data)
 
-		penalty = CalculatePenaltyRule2(transposedData)
+		penalty = calculatePenaltyRule2(transposedData)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule2 failed, expected %d, got %d", test.expected, penalty)
@@ -191,7 +191,7 @@ func TestCalculatePenaltyRule3(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		penalty := CalculatePenaltyRule3(test.data)
+		penalty := calculatePenaltyRule3(test.data)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule3 failed, expected %d, got %d", test.expected, penalty)
@@ -199,7 +199,7 @@ func TestCalculatePenaltyRule3(t *testing.T) {
 
 		transposedData := TransposeMatrix(test.data)
 
-		penalty = CalculatePenaltyRule3(transposedData)
+		penalty = calculatePenaltyRule3(transposedData)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule3 failed, expected %d, got %d", test.expected, penalty)
@@ -251,7 +251,7 @@ func TestCalculatePenaltyRule4(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		penalty := CalculatePenaltyRule4(test.data)
+		penalty := calculatePenaltyRule4(test.data)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule4 failed, expected %d, got %d", test.expected, penalty)
@@ -259,7 +259,7 @@ func TestCalculatePenaltyRule4(t *testing.T) {
 
 		transposedData := TransposeMatrix(test.data)
 
-		penalty = CalculatePenaltyRule4(transposedData)
+		penalty = calculatePenaltyRule4(transposedData)
 
 		if penalty != test.expected {
 			t.Errorf("CalculatePenaltyRule4 failed, expected %d, got %d", test.expected, penalty)
@@ -407,7 +407,7 @@ func TestApplyMask(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		ApplyMask(test.data, test.mask)
+		applyMask(test.data, test.mask)
 
 		if !CompareMatrix(test.data, test.expected) {
 			t.Errorf("ApplyMask failed, expected %v, got %v", test.expected, test.data)

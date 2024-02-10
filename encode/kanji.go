@@ -7,9 +7,9 @@ import (
 	"golang.org/x/text/encoding/japanese"
 )
 
-type KanjiEncoder struct{}
+type kanjiEncoder struct{}
 
-func (*KanjiEncoder) Encode(content string, queue chan ValueBlock) error {
+func (*kanjiEncoder) Encode(content string, queue chan ValueBlock) error {
 	enc := japanese.ShiftJIS.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
 
@@ -42,14 +42,14 @@ func (*KanjiEncoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (*KanjiEncoder) CanEncode(content string) bool {
+func (*kanjiEncoder) CanEncode(content string) bool {
 	return regexpKanji.MatchString(content)
 }
 
-func (*KanjiEncoder) Size(content string) int {
+func (*kanjiEncoder) Size(content string) int {
 	return utf8.RuneCountInString(content) * 13
 }
 
-func (*KanjiEncoder) Mode() EncodingMode {
+func (*kanjiEncoder) Mode() EncodingMode {
 	return EncodingModeKanji
 }

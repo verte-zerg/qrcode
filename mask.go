@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func ApplyMask(data [][]Cell, maskType int) {
+func applyMask(data [][]Cell, maskType int) {
 	for idx, row := range data {
 		for jdx, cell := range row {
 			if cell.Type != CellTypeData {
@@ -35,7 +35,7 @@ func ApplyMask(data [][]Cell, maskType int) {
 	}
 }
 
-func CalculatePenaltyRule1(data [][]Cell) int {
+func calculatePenaltyRule1(data [][]Cell) int {
 	penalty := 0
 
 	rows := len(data)
@@ -102,7 +102,7 @@ func CalculatePenaltyRule1(data [][]Cell) int {
 	return penalty
 }
 
-func CalculatePenaltyRule2(data [][]Cell) int {
+func calculatePenaltyRule2(data [][]Cell) int {
 	penalty := 0
 
 	rows := len(data)
@@ -123,7 +123,7 @@ func CalculatePenaltyRule2(data [][]Cell) int {
 	return penalty
 }
 
-func CalculatePenaltyRule3(data [][]Cell) int {
+func calculatePenaltyRule3(data [][]Cell) int {
 	penalty := 0
 
 	rows := len(data)
@@ -165,7 +165,7 @@ func CalculatePenaltyRule3(data [][]Cell) int {
 	return penalty
 }
 
-func CalculatePenaltyRule4(data [][]Cell) int {
+func calculatePenaltyRule4(data [][]Cell) int {
 	rows := len(data)
 	if rows == 0 {
 		return 0
@@ -195,44 +195,44 @@ func CalculatePenaltyRule4(data [][]Cell) int {
 	}
 }
 
-func CalculatePenalty(data [][]Cell) int {
-	rule1 := CalculatePenaltyRule1(data)
-	rule2 := CalculatePenaltyRule2(data)
-	rule3 := CalculatePenaltyRule3(data)
-	rule4 := CalculatePenaltyRule4(data)
+func calculatePenalty(data [][]Cell) int {
+	rule1 := calculatePenaltyRule1(data)
+	rule2 := calculatePenaltyRule2(data)
+	rule3 := calculatePenaltyRule3(data)
+	rule4 := calculatePenaltyRule4(data)
 
 	return rule1 + rule2 + rule3 + rule4
 }
 
-func DetermineBestMask(data [][]Cell, errorCorrectionLevel ErrorCorrectionLevel) int {
+func determineBestMask(data [][]Cell, errorCorrectionLevel ErrorCorrectionLevel) int {
 	minPenalty := 1<<31 - 1
 	bestMask := 0
 	for maskType := 0; maskType < 8; maskType++ {
-		FillFormatBlock(data, errorCorrectionLevel, maskType)
-		ApplyMask(data, maskType)
-		penalty := CalculatePenalty(data)
+		fillFormatBlock(data, errorCorrectionLevel, maskType)
+		applyMask(data, maskType)
+		penalty := calculatePenalty(data)
 		if penalty < minPenalty {
 			minPenalty = penalty
 			bestMask = maskType
 		}
-		ApplyMask(data, maskType)
+		applyMask(data, maskType)
 	}
 
 	return bestMask
 }
 
-func DetermineBestMaskMicro(data [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel) int {
+func determineBestMaskMicro(data [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel) int {
 	minPenalty := 1<<31 - 1
 	bestMask := 0
 	for _, maskMap := range microToNormalMask {
-		FillFormatBlockMicro(data, version, errorCorrectionLevel, maskMap.microMask)
-		ApplyMask(data, maskMap.normalMask)
-		penalty := CalculatePenalty(data)
+		fillFormatBlockMicro(data, version, errorCorrectionLevel, maskMap.microMask)
+		applyMask(data, maskMap.normalMask)
+		penalty := calculatePenalty(data)
 		if penalty < minPenalty {
 			minPenalty = penalty
 			bestMask = maskMap.microMask
 		}
-		ApplyMask(data, maskMap.normalMask)
+		applyMask(data, maskMap.normalMask)
 	}
 
 	return bestMask

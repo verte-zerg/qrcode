@@ -4,18 +4,18 @@ import "testing"
 
 func TestPositionNext(t *testing.T) {
 	tests := []struct {
-		pos  Position
-		next Position
+		pos  position
+		next position
 	}{
-		{Position{10, 5, 11, -1, false, false}, Position{9, 5, 11, -1, false, false}},
-		{Position{9, 5, 11, -1, false, false}, Position{10, 4, 11, -1, false, false}},
-		{Position{10, 5, 11, 1, false, false}, Position{9, 5, 11, 1, false, false}},
-		{Position{9, 5, 11, 1, false, false}, Position{10, 6, 11, 1, false, false}},
-		{Position{9, 0, 11, -1, false, false}, Position{8, 0, 11, 1, false, false}},
-		{Position{9, 10, 11, 1, false, false}, Position{8, 10, 11, -1, false, false}},
-		{Position{0, 5, 11, -1, false, false}, Position{0, 4, 11, -1, false, false}},
-		{Position{0, 5, 11, 1, false, false}, Position{0, 6, 11, 1, false, false}},
-		{Position{7, 0, 11, -1, false, false}, Position{5, 0, 11, 1, false, true}},
+		{position{10, 5, 11, -1, false, false}, position{9, 5, 11, -1, false, false}},
+		{position{9, 5, 11, -1, false, false}, position{10, 4, 11, -1, false, false}},
+		{position{10, 5, 11, 1, false, false}, position{9, 5, 11, 1, false, false}},
+		{position{9, 5, 11, 1, false, false}, position{10, 6, 11, 1, false, false}},
+		{position{9, 0, 11, -1, false, false}, position{8, 0, 11, 1, false, false}},
+		{position{9, 10, 11, 1, false, false}, position{8, 10, 11, -1, false, false}},
+		{position{0, 5, 11, -1, false, false}, position{0, 4, 11, -1, false, false}},
+		{position{0, 5, 11, 1, false, false}, position{0, 6, 11, 1, false, false}},
+		{position{7, 0, 11, -1, false, false}, position{5, 0, 11, 1, false, true}},
 	}
 
 	for _, test := range tests {
@@ -38,7 +38,7 @@ func TestGetSize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		size := GetSize(test.version)
+		size := getSize(test.version)
 		if size != test.size {
 			t.Errorf("Expected %d, got %d", test.size, size)
 		}

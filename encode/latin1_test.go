@@ -31,7 +31,7 @@ func TestLatin1Encoder_Encode(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &latin1Encoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestLatin1Encoder_CanEncode(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &latin1Encoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestLatin1Encoder_Size(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &latin1Encoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestLatin1Encoder_Size(t *testing.T) {
 }
 
 func TestLatin1Encoder_Mode(t *testing.T) {
-	enc := &Latin1Encoder{}
+	enc := &latin1Encoder{}
 	if enc.Mode() != EncodingModeLatin1 {
 		t.Errorf("expected %v, got %v", EncodingModeLatin1, enc.Mode())
 	}

@@ -23,7 +23,7 @@ const (
 
 var ErrContentTooLong = fmt.Errorf("content is too long")
 
-func IsVersionEnough(encodeBlocks []*encode.EncodeBlock, version int, dataSize int, ecl ErrorCorrectionLevel) (bool, error) {
+func isVersionEnough(encodeBlocks []*encode.EncodeBlock, version int, dataSize int, ecl ErrorCorrectionLevel) (bool, error) {
 	prefixBits := 0
 
 	for _, block := range encodeBlocks {
@@ -38,26 +38,26 @@ func IsVersionEnough(encodeBlocks []*encode.EncodeBlock, version int, dataSize i
 
 	var dataCodewords int
 	if version < 0 {
-		codewords := MicroCodewordsCount[-version]
-		errorCodewords := MicroErrorCorrectionCodeWords[-version][ecl]
+		codewords := microCodewordsCount[-version]
+		errorCodewords := microErrorCorrectionCodeWords[-version][ecl]
 
 		if errorCodewords == 0 {
 			return false, fmt.Errorf("unsupported error correction level: %v", ecl)
 		}
 		dataCodewords = codewords - errorCodewords
 	} else {
-		dataCodewords = CodewordsCount[version] - ErrorCorrectionCodeWords[version][ecl]
+		dataCodewords = codewordsCount[version] - errorCorrectionCodeWords[version][ecl]
 	}
 
 	return size <= dataCodewords, nil
 }
 
-// CalculateMinVersion returns the minimum version for the given content, encoding mode, and error correction level.
+// calculateMinVersion returns the minimum version for the given content, encoding mode, and error correction level.
 // Alghorithm: iterate over versions from 1 to 40 and return the first version that can contain the content.
 // Content is the string to encode.
 // Mode is one of the EncodingMode constants.
 // Error correction level is one of the ErrorCorrectionLevel constants.
-func CalculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrectionLevel, microQR bool) (int, error) {
+func calculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrectionLevel, microQR bool) (int, error) {
 	dataSize := 0
 	for _, block := range encodeBlocks {
 		blockSize, err := block.CalculateDataBitsCount()
@@ -76,7 +76,7 @@ func CalculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrection
 	// For Normal QRs: 1 to 40
 	// For Micro QRs: -1 to -4
 	for version := start; version != end+step; version += step {
-		ok, _ := IsVersionEnough(encodeBlocks, version, dataSize, ecl)
+		ok, _ := isVersionEnough(encodeBlocks, version, dataSize, ecl)
 		// if err != nil {
 		// 	return 0, fmt.Errorf("failed to check version: %w", err)
 		// }
@@ -89,14 +89,14 @@ func CalculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrection
 	return 0, ErrContentTooLong
 }
 
-// RearrangeDataBlocks rearranges the data blocks according to the QR code specification.
+// rearrangeDataBlocks rearranges the data blocks according to the QR code specification.
 // When the QR code is split into data blocks, the data stream should be rearranged.
-func RearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
-	var blocks []ECBlock
+func rearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
+	var blocks []ecBlock
 	if version < 0 {
-		blocks = MicroErrorCorrectionBlocks[-version][errorLevel]
+		blocks = microErrorCorrectionBlocks[-version][errorLevel]
 	} else {
-		blocks = ErrorCorrectionBlocks[version][errorLevel]
+		blocks = errorCorrectionBlocks[version][errorLevel]
 	}
 	var blocksData [][]byte
 	dataIdx := 0
@@ -128,16 +128,16 @@ func RearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLev
 	return buf
 }
 
-func FillTerminator(data []byte, remainedBits int, version int, errorLevel ErrorCorrectionLevel) []byte {
+func fillTerminator(data []byte, remainedBits int, version int, errorLevel ErrorCorrectionLevel) []byte {
 	var availableCodewords int
 	terminatorBits := 4
 
 	// Micro QR Codes
 	if version < 0 {
-		availableCodewords = MicroCodewordsCount[-version] - MicroErrorCorrectionCodeWords[-version][errorLevel]
+		availableCodewords = microCodewordsCount[-version] - microErrorCorrectionCodeWords[-version][errorLevel]
 		terminatorBits = -version*2 + 1
 	} else {
-		availableCodewords = CodewordsCount[version] - ErrorCorrectionCodeWords[version][errorLevel]
+		availableCodewords = codewordsCount[version] - errorCorrectionCodeWords[version][errorLevel]
 	}
 
 	if remainedBits < terminatorBits && len(data) < availableCodewords {
@@ -168,8 +168,8 @@ func FillTerminator(data []byte, remainedBits int, version int, errorLevel Error
 	return data
 }
 
-// GetBytesData returns the byte array for the given content, encoding mode, error correction level, and version.
-func GetBytesData(blocks []*encode.EncodeBlock, errorLevel ErrorCorrectionLevel, version int) ([]byte, error) {
+// getBytesData returns the byte array for the given content, encoding mode, error correction level, and version.
+func getBytesData(blocks []*encode.EncodeBlock, errorLevel ErrorCorrectionLevel, version int) ([]byte, error) {
 	allBits := 0
 
 	queue := make(chan encode.ValueBlock, 100)
@@ -191,10 +191,10 @@ func GetBytesData(blocks []*encode.EncodeBlock, errorLevel ErrorCorrectionLevel,
 
 	// add terminator
 	remainedBits := len(data)*8 - allBits
-	data = FillTerminator(data, remainedBits, version, errorLevel)
+	data = fillTerminator(data, remainedBits, version, errorLevel)
 
-	errorData := GetEDCData(data, version, errorLevel)
-	data = RearrangeDataBlocks(data, version, errorLevel)
+	errorData := getEDCData(data, version, errorLevel)
+	data = rearrangeDataBlocks(data, version, errorLevel)
 	data = append(data, errorData...)
 
 	return data, nil
@@ -202,13 +202,13 @@ func GetBytesData(blocks []*encode.EncodeBlock, errorLevel ErrorCorrectionLevel,
 
 var (
 	// Number of codewords for Micro QR Code version
-	MicroCodewordsCount = [5]int{
+	microCodewordsCount = [5]int{
 		0, // added for shift start index to 1
 		5, 10, 17, 24,
 	}
 
 	// Number of codewords for each version
-	CodewordsCount = [41]int{
+	codewordsCount = [41]int{
 		0, // added for shift start index to 1
 		26, 44, 70, 100, 134, 172, 196, 242, 292, 346,
 		404, 466, 532, 581, 655, 733, 815, 901, 991, 1085,

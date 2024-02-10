@@ -58,19 +58,19 @@ func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMo
 	version := options.Version
 
 	if version == 0 {
-		version, err = CalculateMinVersion(blocks, qrCodeOptions.ErrorLevel, options.MicroQR)
+		version, err = calculateMinVersion(blocks, qrCodeOptions.ErrorLevel, options.MicroQR)
 		if err != nil {
 			return nil, fmt.Errorf("failed to calculate min version: %w", err)
 		}
 	}
 	qrCodeOptions.Version = version
 
-	buf, err := GetBytesData(blocks, options.ErrorLevel, version)
+	buf, err := getBytesData(blocks, options.ErrorLevel, version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bytes data: %w", err)
 	}
 
-	data := GenerateField(buf, version, options.ErrorLevel)
+	data := generateField(buf, version, options.ErrorLevel)
 
 	return &QRCode{
 		options: qrCodeOptions,
@@ -103,5 +103,5 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 }
 
 func (qr *QRCode) Plot(writer io.Writer) error {
-	return Plot(qr.data, writer, DEFAULT_SCALE)
+	return plot(qr.data, writer, DEFAULT_SCALE)
 }

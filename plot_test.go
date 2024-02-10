@@ -23,7 +23,7 @@ func TestPlotRectangle(t *testing.T) {
 	whiteClr := color.RGBA{255, 255, 255, 255}
 	for _, row := range data {
 		x, y, left, right, top, bottom := row[0], row[1], row[2], row[3], row[4], row[5]
-		PlotRectangle(img, x, y, step, image.White)
+		plotRectangle(img, x, y, step, image.White)
 		for idx := left; idx < right; idx++ {
 			for jdx := top; jdx < bottom; jdx++ {
 				clr := img.At(idx, jdx)
@@ -63,7 +63,7 @@ func TestPlot(t *testing.T) {
 		}
 
 		var buf bytes.Buffer
-		err := Plot(data, &buf, 1)
+		err := plot(data, &buf, 1)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestPlot(t *testing.T) {
 		var buf InvalidWriter
 
 		// Call the function and check for error
-		err := Plot(data, &buf, 1)
+		err := plot(data, &buf, 1)
 		if err == nil {
 			t.Error("expected an error, but got nil")
 		}

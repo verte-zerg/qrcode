@@ -13,7 +13,7 @@ import (
 	"golang.org/x/text/encoding/unicode/utf32"
 )
 
-var AssigmentNumbersEncodings = map[uint]encoding.Encoding{
+var assigmentNumbersEncodings = map[uint]encoding.Encoding{
 	0:  charmap.CodePage437,
 	1:  charmap.ISO8859_1,
 	2:  charmap.CodePage437,
@@ -52,13 +52,13 @@ var AssigmentNumbersEncodings = map[uint]encoding.Encoding{
 
 var ErrUnknownAssignmentNumber = fmt.Errorf("unknown assignment number")
 
-type EciEncoder struct {
+type eciEncoder struct {
 	AssignmentNumber uint
 	DataMode         EncodingMode
 }
 
-func (e EciEncoder) Encode(content string, queue chan ValueBlock) error {
-	enc, ok := AssigmentNumbersEncodings[e.AssignmentNumber]
+func (e eciEncoder) Encode(content string, queue chan ValueBlock) error {
+	enc, ok := assigmentNumbersEncodings[e.AssignmentNumber]
 	if !ok {
 		return fmt.Errorf("unknown assignment number: %d", e.AssignmentNumber)
 	}
@@ -79,8 +79,8 @@ func (e EciEncoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (e EciEncoder) CanEncode(content string) bool {
-	enc, ok := AssigmentNumbersEncodings[e.AssignmentNumber]
+func (e eciEncoder) CanEncode(content string) bool {
+	enc, ok := assigmentNumbersEncodings[e.AssignmentNumber]
 	if !ok {
 		return false
 	}
@@ -90,8 +90,8 @@ func (e EciEncoder) CanEncode(content string) bool {
 	return err == nil
 }
 
-func (e EciEncoder) Size(content string) int {
-	enc, ok := AssigmentNumbersEncodings[e.AssignmentNumber]
+func (e eciEncoder) Size(content string) int {
+	enc, ok := assigmentNumbersEncodings[e.AssignmentNumber]
 	if !ok {
 		return 0
 	}
@@ -105,6 +105,6 @@ func (e EciEncoder) Size(content string) int {
 	return len(data) * 8
 }
 
-func (e EciEncoder) Mode() EncodingMode {
+func (e eciEncoder) Mode() EncodingMode {
 	return EncodingModeECI
 }

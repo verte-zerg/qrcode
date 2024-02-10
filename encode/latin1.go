@@ -7,9 +7,9 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-type Latin1Encoder struct{}
+type latin1Encoder struct{}
 
-func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
+func (latin1Encoder) Encode(content string, queue chan ValueBlock) error {
 	enc := charmap.ISO8859_1.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
 	if err != nil {
@@ -26,14 +26,14 @@ func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (*Latin1Encoder) Size(content string) int {
+func (*latin1Encoder) Size(content string) int {
 	return utf8.RuneCountInString(content) * 8
 }
 
-func (*Latin1Encoder) CanEncode(content string) bool {
+func (*latin1Encoder) CanEncode(content string) bool {
 	return regexpLatin1.MatchString(content)
 }
 
-func (*Latin1Encoder) Mode() EncodingMode {
+func (*latin1Encoder) Mode() EncodingMode {
 	return EncodingModeLatin1
 }
