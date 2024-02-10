@@ -2,13 +2,9 @@ name: Go Test
 
 on:
   push:
-    branches:
-      - main
-      - feature/add-micro-qr-codes
   pull_request:
     branches:
       - main
-      - feature/add-micro-qr-codes
 
 jobs:
   build_test_dependency:
