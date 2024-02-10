@@ -8,18 +8,23 @@ import (
 )
 
 const (
+	// DEFAULT_SCALE is the default scale for the QR Code image.
+	// The image will be len(data) * DEFAULT_SCALE x len(data) * DEFAULT_SCALE pixels.
 	DEFAULT_SCALE = 4
 )
 
+// QRCode is a struct that represents a QR Code.
 type QRCode struct {
 	// Content
 	Content string
 	// Options
 	options *QRCodeOptions
 
-	data [][]Cell
+	// Data
+	Data [][]Cell
 }
 
+// QRCodeOptions is a struct that represents the options for the QR Code.
 type QRCodeOptions struct {
 	// Encoding is the encoding mode.
 	// Default: calculated based on the content (can undestand only numeric, alphanumeric, latin1 and kanji).
@@ -32,6 +37,7 @@ type QRCodeOptions struct {
 	Version int
 }
 
+// QRCodeOptionsMultiMode is a struct that represents the options for building multi-mode QR Codes.
 type QRCodeOptionsMultiMode struct {
 	// Level is the error correction level.
 	// Default: ErrorCorrectionLevelLow.
@@ -46,6 +52,7 @@ type QRCodeOptionsMultiMode struct {
 	MicroQR bool
 }
 
+// CreateMultiMode creates a QR Code with multiple modes.
 func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error) {
 	var err error
 	if options == nil {
@@ -74,10 +81,11 @@ func CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMo
 
 	return &QRCode{
 		options: qrCodeOptions,
-		data:    data,
+		Data:    data,
 	}, nil
 }
 
+// Create creates a QR Code with the given content and options.
 func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 	if options == nil {
 		options = &QRCodeOptions{}
@@ -102,6 +110,7 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 	})
 }
 
+// Plot plots the QR Code to the given writer.
 func (qr *QRCode) Plot(writer io.Writer) error {
-	return plot(qr.data, writer, DEFAULT_SCALE)
+	return plot(qr.Data, writer, DEFAULT_SCALE)
 }

@@ -627,7 +627,7 @@ func TestPlotComparing(t *testing.T) {
 									continue
 								}
 
-								err = ValidateContentRaw(qr.data, content)
+								err = ValidateContentRaw(qr.Data, content)
 								if err != nil {
 									t.Error(err)
 								}

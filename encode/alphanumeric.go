@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 )
 
+// alphaNumericConverter is a struct that uses for converting string to alphanumeric data.
 type alphaNumericEncoder struct{}
 
 func (*alphaNumericEncoder) Encode(content string, queue chan ValueBlock) error {

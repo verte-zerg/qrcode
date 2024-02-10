@@ -52,6 +52,7 @@ var utfToAlphaNumeric = map[rune]rune{
 	':': 44,
 }
 
+// alphaNumericConverter converts a string to a byte slice using the alphanumeric encoding.
 type alphaNumericConverter struct{}
 
 func (e *alphaNumericConverter) Convert(s string) ([]byte, error) {

@@ -1,6 +1,7 @@
 package qrcode
 
 var (
+	// maskFuncs is a list of mask functions
 	maskFuncs = []func(row, col int) bool{
 		func(row, col int) bool { return (row+col)%2 == 0 },
 		func(row, col int) bool { return row%2 == 0 },
@@ -12,6 +13,7 @@ var (
 		func(row, col int) bool { return ((row*col)%3+(row+col)%2)%2 == 0 },
 	}
 
+	// microToNormalMask is a map of micro mask to normal mask
 	microToNormalMask = []struct {
 		microMask  int
 		normalMask int
@@ -23,6 +25,7 @@ var (
 	}
 )
 
+// applyMask applies the mask to the data
 func applyMask(data [][]Cell, maskType int) {
 	for idx, row := range data {
 		for jdx, cell := range row {
@@ -35,6 +38,8 @@ func applyMask(data [][]Cell, maskType int) {
 	}
 }
 
+// calculatePenaltyRule1 calculates the penalty for rule 1
+// Rule 1: 5 or more same color cells in a row or column give a penalty of length - 2
 func calculatePenaltyRule1(data [][]Cell) int {
 	penalty := 0
 
@@ -102,6 +107,9 @@ func calculatePenaltyRule1(data [][]Cell) int {
 	return penalty
 }
 
+// calculatePenaltyRule2 calculates the penalty for rule 2
+// Rule 2: 2x2 block of same color cells give a penalty of 3
+// Overlapping 2x2 blocks are counted multiple times
 func calculatePenaltyRule2(data [][]Cell) int {
 	penalty := 0
 
@@ -123,6 +131,8 @@ func calculatePenaltyRule2(data [][]Cell) int {
 	return penalty
 }
 
+// calculatePenaltyRule3 calculates the penalty for rule 3
+// Rule 3: dark-light-dark-dark-dark-light-dark-light-light-light-light or reverse order in a row or column gives a penalty of 40
 func calculatePenaltyRule3(data [][]Cell) int {
 	penalty := 0
 
@@ -165,6 +175,10 @@ func calculatePenaltyRule3(data [][]Cell) int {
 	return penalty
 }
 
+// calculatePenaltyRule4 calculates the penalty for rule 4
+// Rule 4: dark modules should be around 50% of the total
+// The penalty is calculated as the absolute difference between the percentage of dark modules and white modules
+// The result rounds to the nearest multiple of 5 in 50% direction and multiplies by 2
 func calculatePenaltyRule4(data [][]Cell) int {
 	rows := len(data)
 	if rows == 0 {
@@ -195,6 +209,7 @@ func calculatePenaltyRule4(data [][]Cell) int {
 	}
 }
 
+// calculatePenalty calculates the penalty for the given data using all rules
 func calculatePenalty(data [][]Cell) int {
 	rule1 := calculatePenaltyRule1(data)
 	rule2 := calculatePenaltyRule2(data)
@@ -204,6 +219,8 @@ func calculatePenalty(data [][]Cell) int {
 	return rule1 + rule2 + rule3 + rule4
 }
 
+// determineBestMask determines the best mask for the given data and error correction level
+// The best mask is the one that gives the lowest penalty
 func determineBestMask(data [][]Cell, errorCorrectionLevel ErrorCorrectionLevel) int {
 	minPenalty := 1<<31 - 1
 	bestMask := 0
@@ -221,6 +238,8 @@ func determineBestMask(data [][]Cell, errorCorrectionLevel ErrorCorrectionLevel)
 	return bestMask
 }
 
+// determineBestMaskMicro determines the best mask for the given micro QR Code data, version and error correction level
+// The best mask is the one that gives the lowest penalty
 func determineBestMaskMicro(data [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel) int {
 	minPenalty := 1<<31 - 1
 	bestMask := 0

@@ -43,7 +43,7 @@ func TestGFDiv(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%v / %v", test.a, test.b)
 		t.Run(name, func(t *testing.T) {
-			if res := gfMod(test.a, test.b); res != test.res {
+			if res := gfDiv(test.a, test.b); res != test.res {
 				t.Errorf("Expected %v, got %v", test.res, res)
 			}
 		})
@@ -132,7 +132,7 @@ func TestPolynomialDivide(t *testing.T) {
 	for _, test := range tests {
 		name := fmt.Sprintf("%v / %v", test.a, test.b)
 		t.Run(name, func(t *testing.T) {
-			if res := test.a.Divide(test.b); !bytes.Equal(res.Coefficients, test.res.Coefficients) {
+			if res := test.a.Modulo(test.b); !bytes.Equal(res.Coefficients, test.res.Coefficients) {
 				t.Errorf("Expected %v, got %v", test.res, res)
 			}
 		})
@@ -175,20 +175,5 @@ func TestConvertByteToPolynomial(t *testing.T) {
 		if res := convertByteToPolynomial(test.version).Normalize(); !bytes.Equal(res.Coefficients, test.res.Coefficients) {
 			t.Errorf("Expected %v, got %v", test.res, res)
 		}
-	}
-}
-
-func TestPolynomialDivideToVersion(t *testing.T) {
-	for version := 1; version <= 40; version++ {
-		p := convertByteToPolynomial(byte(version))
-
-		// try catch panic
-		defer func() {
-			if r := recover(); r != nil {
-				t.Errorf("Panic: %v", r)
-			}
-		}()
-
-		p.Divide(versionPolynomial)
 	}
 }

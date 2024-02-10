@@ -7,6 +7,7 @@ import (
 	"golang.org/x/text/encoding/japanese"
 )
 
+// kanjiEncoder is a struct that uses for converting string to kanji data.
 type kanjiEncoder struct{}
 
 func (*kanjiEncoder) Encode(content string, queue chan ValueBlock) error {

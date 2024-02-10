@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 )
 
+// numericEncoder is a struct that uses for converting string to numeric data.
 type numericEncoder struct{}
 
 func (*numericEncoder) Encode(content string, queue chan ValueBlock) error {

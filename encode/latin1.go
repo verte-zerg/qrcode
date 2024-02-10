@@ -7,6 +7,7 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+// latin1Encoder is a struct that uses for converting string to latin1 data.
 type latin1Encoder struct{}
 
 func (latin1Encoder) Encode(content string, queue chan ValueBlock) error {

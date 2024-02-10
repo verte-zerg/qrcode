@@ -1,13 +1,15 @@
 package qrcode
 
+// calculateEDCData calculates error correction data for the given data block, version and error correction level
 func calculateEDCPoly(data []byte, codewords int) []byte {
 	dataPoly := &polynomial{data}
 	degree := codewords - len(data)
 	dataPoly = dataPoly.IncreaseDegree(degree)
-	edcPoly := dataPoly.Divide(generatorPolynomials[degree])
+	edcPoly := dataPoly.Modulo(generatorPolynomials[degree])
 	return edcPoly.Coefficients
 }
 
+// getEDCData returns error correction data for the given data, version and error correction level
 func getEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
 	var buf []byte
 
@@ -104,23 +106,16 @@ var errorCorrectionCodeWords = [41][4]int{
 	{750, 1372, 2040, 2430},
 }
 
+// Error correction block metadata
 type ecBlock struct {
 	Blocks         int
 	TotalCodewords int
 	DataCodewords  int
-	Ratio          int //TODO: rename
+	Ratio          int //TODO: unused, wrong name
 }
-
-// ['give you up','let you down','run around and desert you'].map(x=>'Never gonna '+x)
-// Never gonna give you upNever gonna let you downNever gonna run around and desert you
 
 // Error correction blocks for Micro QR Code version and error correction level
 // Structure: [version][error correction level][block]
-//
-// (5,3,0)Ь
-// (10,5,1 )Ь
-// (10,4,2)Ь (17,11,2)Ь (17,9,4)
-// (24,16,3)Ь (24,14,5) (24,10,7)
 var microErrorCorrectionBlocks = [5][4][]ecBlock{
 	{{}, {}, {}, {}}, // added to shift the index by 1
 	{{{1, 5, 3, 0}}, {}, {}, {}},

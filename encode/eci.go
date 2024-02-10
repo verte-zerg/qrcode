@@ -13,6 +13,7 @@ import (
 	"golang.org/x/text/encoding/unicode/utf32"
 )
 
+// assigmentNumbersEncodings is a map of ECI assignment numbers to their respective encodings.
 var assigmentNumbersEncodings = map[uint]encoding.Encoding{
 	0:  charmap.CodePage437,
 	1:  charmap.ISO8859_1,
@@ -52,6 +53,7 @@ var assigmentNumbersEncodings = map[uint]encoding.Encoding{
 
 var ErrUnknownAssignmentNumber = fmt.Errorf("unknown assignment number")
 
+// eciEncoder is an encoder for ECI (Extended Channel Interpretation) mode.
 type eciEncoder struct {
 	AssignmentNumber uint
 	DataMode         EncodingMode

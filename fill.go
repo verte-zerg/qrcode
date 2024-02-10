@@ -2,6 +2,7 @@ package qrcode
 
 type CellType int
 
+// Cell type represents the type of a cell in the QR code matrix.
 const (
 	CellTypeData CellType = iota
 	CellTypeFormat
@@ -13,6 +14,7 @@ const (
 )
 
 var (
+	// searchPattern is a 7x7 search pattern for the QR code.
 	searchPattern = [7][7]bool{
 		{true, true, true, true, true, true, true},
 		{true, false, false, false, false, false, true},
@@ -23,6 +25,7 @@ var (
 		{true, true, true, true, true, true, true},
 	}
 
+	// alignmentPattern is a 5x5 alignment pattern for the QR code.
 	alignmentPattern = [5][5]bool{
 		{true, true, true, true, true},
 		{true, false, false, false, true},
@@ -31,6 +34,7 @@ var (
 		{true, true, true, true, true},
 	}
 
+	// alignmentPositions is a table of alignment pattern positions for each version.
 	alignmentPositions = [41][]int{
 		{}, // added for shift versions, as first version has index 1
 		{},
@@ -76,7 +80,7 @@ var (
 	}
 
 	// versionValues is a table of version information for each version.
-	// The first index is the version number 7, as the version block starts at version 7.
+	// The zero index is the version number 7, as the version block starts from version 7.
 	versionValues = [34][18]byte{
 		{0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0},
 		{0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0},
@@ -118,7 +122,7 @@ var (
 	// Structure: [version][error correction level][mask pattern][15 bits]
 	microFormatValues = [5][4][4][15]byte{
 		{}, // added for shift versions, as first version has index 1
-		{
+		{ // Version M1
 			{
 				{1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
 				{1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0},
@@ -126,48 +130,48 @@ var (
 				{1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0},
 			},
 		},
-		{
-			{
+		{ // Version M2
+			{ // Error correction level L
 				{1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0},
 				{1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1},
 				{1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
 				{1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1},
 			},
-			{
+			{ // Error correction level M
 				{1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1},
 				{1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0},
 				{1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1},
 				{1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0},
 			},
 		},
-		{
-			{
+		{ // Version M3
+			{ // Error correction level L
 				{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0},
 				{1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1},
 				{1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0},
 				{1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1},
 			},
-			{
+			{ // Error correction level M
 				{0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0},
 				{0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1},
 				{0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0},
 				{0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1},
 			},
 		},
-		{
-			{
+		{ // Version M4
+			{ // Error correction level L
 				{0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1},
 				{0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0},
 				{0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1},
 				{0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0},
 			},
-			{
+			{ // Error correction level M
 				{0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0},
 				{0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
 				{0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0},
 				{0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1},
 			},
-			{
+			{ // Error correction level Q
 				{0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1},
 				{0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0},
 				{0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1},
@@ -179,7 +183,7 @@ var (
 	// formatValues is a table of format information for each error correction level and mask pattern.
 	// Structure: [error correction level][mask pattern][15 bits]
 	formatValues = [4][8][15]byte{
-		{
+		{ // Error correction level L
 			{1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0},
 			{1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1},
 			{1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0},
@@ -189,7 +193,7 @@ var (
 			{1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
 			{1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0},
 		},
-		{
+		{ // Error correction level M
 			{1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
 			{1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1},
 			{1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0},
@@ -199,7 +203,7 @@ var (
 			{1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1},
 			{1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0},
 		},
-		{
+		{ // Error correction level Q
 			{0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1},
 			{0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0},
 			{0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1},
@@ -209,7 +213,7 @@ var (
 			{0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0},
 			{0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1},
 		},
-		{
+		{ // Error correction level H
 			{0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1},
 			{0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0},
 			{0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1},
@@ -222,11 +226,13 @@ var (
 	}
 )
 
+// Cell represents a cell in the QR code matrix with a value and a type.
 type Cell struct {
 	Value bool
 	Type  CellType
 }
 
+// position is a iterator, which is used to fill the QR code matrix in a spiral pattern.
 type position struct {
 	X, Y        int
 	Size        int
@@ -261,6 +267,7 @@ func (p *position) Next() {
 	}
 }
 
+// getSize returns the square size of the QR code matrix for the given version.
 func getSize(version int) int {
 	if version < 0 {
 		return 9 + (-version)*2
@@ -268,6 +275,7 @@ func getSize(version int) int {
 	return 17 + 4*version
 }
 
+// fillSearchPattern fills the search patterns in the QR code matrix.
 func fillSearchPattern(version int, field [][]Cell) {
 	size := len(field)
 	for i := 0; i < 7; i++ {
@@ -299,6 +307,7 @@ func fillSearchPattern(version int, field [][]Cell) {
 	}
 }
 
+// fillSyncPattern fills the sync patterns in the QR code matrix.
 func fillSyncPattern(version int, field [][]Cell) {
 	size := len(field)
 	value := true
@@ -319,6 +328,7 @@ func fillSyncPattern(version int, field [][]Cell) {
 	}
 }
 
+// fillAlignmentPattern fills the alignment patterns in the QR code matrix.
 func fillAlignmentPattern(field [][]Cell, version int) {
 	positions := alignmentPositions[version]
 	for idx, i := range positions {
@@ -335,6 +345,7 @@ func fillAlignmentPattern(field [][]Cell, version int) {
 	}
 }
 
+// fillVersionBlock fills the version block in the QR code matrix.
 func fillVersionBlock(field [][]Cell, version int) {
 	size := len(field)
 	if version < 7 {
@@ -349,6 +360,7 @@ func fillVersionBlock(field [][]Cell, version int) {
 	}
 }
 
+// fillFormatBlock fills the format block in the QR code matrix.
 func fillFormatBlock(field [][]Cell, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
 	size := len(field)
 	values := formatValues[errorCorrectionLevel][maskPattern]
@@ -374,6 +386,9 @@ func fillFormatBlock(field [][]Cell, errorCorrectionLevel ErrorCorrectionLevel, 
 	field[size-8][8] = Cell{Value: true, Type: CellTypeFormat}
 }
 
+// fillEmptyFormatBlock set type CellTypeFormat to the format block cells.
+// This is used for avoid fill the data cells over the format block cells.
+// The format block will be filled later (after the data cells are filled and the best mask is determined).
 func fillEmptyFormatBlock(field [][]Cell) {
 	size := len(field)
 	for i := 0; i < 8; i++ {
@@ -398,6 +413,7 @@ func fillEmptyFormatBlock(field [][]Cell) {
 	field[size-8][8] = Cell{Value: true, Type: CellTypeFormat}
 }
 
+// fillFormatBlockMicro fills the format block in the QR code matrix for micro QR codes.
 func fillFormatBlockMicro(field [][]Cell, version int, errorCorrectionLevel ErrorCorrectionLevel, maskPattern int) {
 	values := microFormatValues[-version][errorCorrectionLevel][maskPattern]
 	for i := 0; i < 8; i++ {
@@ -409,6 +425,9 @@ func fillFormatBlockMicro(field [][]Cell, version int, errorCorrectionLevel Erro
 	}
 }
 
+// fillEmptyFormatBlockMicro set type CellTypeFormat to the format block cells for micro QR codes.
+// This is used for avoid fill the data cells over the format block cells.
+// The format block will be filled later (after the data cells are filled and the best mask is determined).
 func fillEmptyFormatBlockMicro(field [][]Cell) {
 	for i := 0; i < 8; i++ {
 		// up -> down, on the right side of the top-left search pattern
@@ -419,6 +438,7 @@ func fillEmptyFormatBlockMicro(field [][]Cell) {
 	}
 }
 
+// fillDataBlock fills the data block in the QR code matrix.
 func fillDataBlock(field [][]Cell, data []byte) {
 	size := len(field)
 	bitIdx := 0
@@ -436,6 +456,7 @@ func fillDataBlock(field [][]Cell, data []byte) {
 	}
 }
 
+// fillDataBlockMicro fills the data block in the QR code matrix for micro QR codes.
 func fillDataBlockMicro(field [][]Cell, data []byte, version int, errorLevel ErrorCorrectionLevel) {
 	size := len(field)
 	bitIdx := 0
@@ -465,6 +486,7 @@ func fillDataBlockMicro(field [][]Cell, data []byte, version int, errorLevel Err
 	}
 }
 
+// generateField creates a QR code matrix based on the given data, version and error correction level.
 func generateField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
 	if version < 0 {
 		return generateMicroQRField(data, version, errorCorrectionLevel)
@@ -489,6 +511,7 @@ func generateField(data []byte, version int, errorCorrectionLevel ErrorCorrectio
 	return field
 }
 
+// generateMicroQRField creates a micro QR code matrix based on the given data, version and error correction level.
 func generateMicroQRField(data []byte, version int, errorCorrectionLevel ErrorCorrectionLevel) [][]Cell {
 	size := getSize(version)
 	field := make([][]Cell, size)

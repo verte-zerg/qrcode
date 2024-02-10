@@ -23,6 +23,7 @@ const (
 
 var ErrContentTooLong = fmt.Errorf("content is too long")
 
+// isVersionEnough checks if the given version can contain the data
 func isVersionEnough(encodeBlocks []*encode.EncodeBlock, version int, dataSize int, ecl ErrorCorrectionLevel) (bool, error) {
 	prefixBits := 0
 
@@ -53,10 +54,7 @@ func isVersionEnough(encodeBlocks []*encode.EncodeBlock, version int, dataSize i
 }
 
 // calculateMinVersion returns the minimum version for the given content, encoding mode, and error correction level.
-// Alghorithm: iterate over versions from 1 to 40 and return the first version that can contain the content.
-// Content is the string to encode.
-// Mode is one of the EncodingMode constants.
-// Error correction level is one of the ErrorCorrectionLevel constants.
+// Alghorithm: iterate over versions from 1 to 40 (from M1 to M4 for MicroQR) and return the first version that can contain the content.
 func calculateMinVersion(encodeBlocks []*encode.EncodeBlock, ecl ErrorCorrectionLevel, microQR bool) (int, error) {
 	dataSize := 0
 	for _, block := range encodeBlocks {
@@ -128,6 +126,7 @@ func rearrangeDataBlocks(data []byte, version int, errorLevel ErrorCorrectionLev
 	return buf
 }
 
+// fillTerminator fills the data with terminator and padding bits based on the QR code specification.
 func fillTerminator(data []byte, remainedBits int, version int, errorLevel ErrorCorrectionLevel) []byte {
 	var availableCodewords int
 	terminatorBits := 4
