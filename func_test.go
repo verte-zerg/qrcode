@@ -125,12 +125,9 @@ func TestPlotBase(t *testing.T) {
 
 func TestPlotMicro(t *testing.T) {
 	content := "8492314"
-	qr, err := CreateMultiMode(
-		[]*encode.EncodeBlock{{
-			Mode: encode.EncodingModeNumeric,
-			Data: content,
-		}},
-		&QRCodeOptionsMultiMode{
+	qr, err := Create(
+		content,
+		&QRCodeOptions{
 			ErrorLevel: ErrorCorrectionLevelLow,
 			MicroQR:    true,
 		},
@@ -140,7 +137,7 @@ func TestPlotMicro(t *testing.T) {
 		t.Error(err)
 	}
 
-	file, err := os.Create("test_new.png")
+	file, err := os.Create("test_micro.png")
 	if err != nil {
 		t.Error(err)
 	}
@@ -151,7 +148,7 @@ func TestPlotMicro(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = ValidateContent(content, "test_new.png", false)
+	err = ValidateContent(content, "test_micro.png", false)
 	if err != nil {
 		t.Error(err)
 	}
