@@ -3,16 +3,15 @@
 ## Features
 
 ### Formats
-- MicroQR codes
-- Structured append codes
 - Data optimization algorithm
 - RAW data
+- Structured append codes
 
 ### Visual
 - custom colors
-- custom fillings
+- different shapes for the markers
 - logo
 
 ## Code
 - unit tests
-- move functional tests to separate project under GPL license (because of ZXing license)
+- add comments with references to the specification
