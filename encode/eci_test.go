@@ -27,7 +27,7 @@ func TestEciEncoder_Encode(t *testing.T) {
 		t.Run(test.content, func(t *testing.T) {
 			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			queue := make(chan ValueBlock, 100)
@@ -75,7 +75,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 		t.Run(test.content, func(t *testing.T) {
 			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			if eci.CanEncode(test.content) != test.expected {
@@ -88,7 +88,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 	t.Run("invalid assignment number", func(t *testing.T) {
 		eci := &eciEncoder{
 			AssignmentNumber: 100,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.CanEncode("abc") {
@@ -100,7 +100,7 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 	t.Run("invalid content", func(t *testing.T) {
 		eci := &eciEncoder{
 			AssignmentNumber: 4,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.CanEncode("АБВГД") {
@@ -131,7 +131,7 @@ func TestEciEncoder_Size(t *testing.T) {
 		t.Run(test.content, func(t *testing.T) {
 			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			size := eci.Size(test.content)
@@ -145,7 +145,7 @@ func TestEciEncoder_Size(t *testing.T) {
 	t.Run("invalid assignment number", func(t *testing.T) {
 		eci := &eciEncoder{
 			AssignmentNumber: 100,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.Size("abc") != 0 {
@@ -157,7 +157,7 @@ func TestEciEncoder_Size(t *testing.T) {
 	t.Run("invalid content", func(t *testing.T) {
 		eci := &eciEncoder{
 			AssignmentNumber: 4,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.Size("АБВГД") != 0 {

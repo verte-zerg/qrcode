@@ -56,7 +56,7 @@ The `qrcode.Create` function accepts an `Options` struct as a second argument. T
 ```go
 type QRCodeOptions struct {
 	// Encoding is the encoding mode.
-	// Default: calculated based on the content (numeric, alphanumeric, latin1, kanji or utf-8 with ECI)
+	// Default: calculated based on the content (numeric, alphanumeric, byte, kanji or utf-8 with ECI)
 	Mode encode.EncodingMode
 
 	// Level is the error correction level.
@@ -78,7 +78,7 @@ You can specify the encoding mode, error correction level, version and enable mi
 Supported encoding modes:
 - `encode.EncodingModeNumeric`
 - `encode.EncodingModeAlphanumeric`
-- `encode.EncodingModeLatin1`
+- `encode.EncodingModeByte`
 - `encode.EncodingModeKanji`
 - `encode.EncodingModeECI`
 
@@ -112,7 +112,7 @@ func main() {
 		{
 			Mode:             encode.EncodingModeECI,
 			Data:             "привет мир",
-			SubMode:          encode.EncodingModeLatin1,  // The mode must be always equal to EncodingModeLatin1 for ECI
+			SubMode:          encode.EncodingModeByte,  // The mode must be always equal to EncodingModeByte for ECI
 			AssignmentNumber: encode.ISO8859_5, // cyrillic
 		},
 	}

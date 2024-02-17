@@ -13,7 +13,7 @@ type EncodingMode int
 const (
 	EncodingModeNumeric      EncodingMode = 1
 	EncodingModeAlphaNumeric EncodingMode = 2
-	EncodingModeLatin1       EncodingMode = 4
+	EncodingModeByte         EncodingMode = 4
 	EncodingModeKanji        EncodingMode = 8
 	EncodingModeECI          EncodingMode = 7
 )
@@ -28,7 +28,7 @@ const (
 var encodingModeLengthMap = map[EncodingMode][7]int{
 	EncodingModeNumeric:      {3, 4, 5, 6, 10, 12, 14},
 	EncodingModeAlphaNumeric: {0, 3, 4, 5, 9, 11, 13},
-	EncodingModeLatin1:       {0, 0, 4, 5, 8, 16, 16},
+	EncodingModeByte:         {0, 0, 4, 5, 8, 16, 16},
 	EncodingModeKanji:        {0, 0, 3, 4, 8, 10, 12},
 }
 
@@ -36,7 +36,7 @@ var encodingModeLengthMap = map[EncodingMode][7]int{
 var encodingModeEncoderMap = map[EncodingMode]QREncoder{
 	EncodingModeNumeric:      &numericEncoder{},
 	EncodingModeAlphaNumeric: &alphaNumericEncoder{},
-	EncodingModeLatin1:       &latin1Encoder{},
+	EncodingModeByte:         &byteEncoder{},
 	EncodingModeKanji:        &kanjiEncoder{},
 }
 
@@ -55,7 +55,7 @@ var modeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
 		{Value: 1, Bits: 2},
 		{Value: 1, Bits: 3},
 	},
-	EncodingModeLatin1: {
+	EncodingModeByte: {
 		{Value: 0, Bits: 0},
 		{Value: 0, Bits: 0},
 		{Value: 2, Bits: 2},
@@ -89,7 +89,7 @@ var ErrVersionDoesNotSupportEncodingMode = errors.New("version does not support 
 
 var regexpNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9]+$`)
 var regexpAlphaNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9A-Z $%*+\-./:]+$`)
-var regexpLatin1 *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
+var regexpByte *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
 var regexpKanji *regexp.Regexp = regexp.MustCompile(`^[\p{Hiragana}\p{Katakana}\p{Han}]+$`)
 
 // QREncoder is an interface for all encoders.
@@ -292,8 +292,8 @@ func GetEncodingMode(s string) (EncodingMode, error) {
 	if regexpAlphaNumeric.MatchString(s) {
 		return EncodingModeAlphaNumeric, nil
 	}
-	if regexpLatin1.MatchString(s) {
-		return EncodingModeLatin1, nil
+	if regexpByte.MatchString(s) {
+		return EncodingModeByte, nil
 	}
 	if regexpKanji.MatchString(s) {
 		return EncodingModeKanji, nil

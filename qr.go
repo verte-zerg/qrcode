@@ -35,7 +35,7 @@ type QRCode struct {
 // QRCodeOptions is a struct that represents the options for the QR Code.
 type QRCodeOptions struct {
 	// Encoding is the encoding mode.
-	// Default: calculated based on the content (can undestand only numeric, alphanumeric, latin1, kanji or utf-8 with ECI)
+	// Default: calculated based on the content (can undestand only numeric, alphanumeric, byte, kanji or utf-8 with ECI)
 	Mode encode.EncodingMode
 
 	// Level is the error correction level.
@@ -116,7 +116,7 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 		// If the content is not valid for any mode, use UTF-8 with ECI
 		if err != nil {
 			encodeBlock.Mode = encode.EncodingModeECI
-			encodeBlock.SubMode = encode.EncodingModeLatin1
+			encodeBlock.SubMode = encode.EncodingModeByte
 			encodeBlock.AssignmentNumber = 26
 		}
 	}
