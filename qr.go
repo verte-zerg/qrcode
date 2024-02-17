@@ -13,6 +13,14 @@ const (
 	DEFAULT_SCALE = 4
 )
 
+const (
+	// MicroQR versions
+	M1 = -1
+	M2 = -2
+	M3 = -3
+	M4 = -4
+)
+
 // QRCode is a struct that represents a QR Code.
 type QRCode struct {
 	// Content
