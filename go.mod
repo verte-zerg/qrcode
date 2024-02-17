@@ -1,5 +1,5 @@
 module github.com/verte-zerg/qrcode
 
-go 1.21.4
+go 1.22.0
 
 require golang.org/x/text v0.14.0

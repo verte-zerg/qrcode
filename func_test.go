@@ -125,12 +125,9 @@ func TestPlotBase(t *testing.T) {
 
 func TestPlotMicro(t *testing.T) {
 	content := "8492314"
-	qr, err := CreateMultiMode(
-		[]*encode.EncodeBlock{{
-			Mode: encode.EncodingModeNumeric,
-			Data: content,
-		}},
-		&QRCodeOptionsMultiMode{
+	qr, err := Create(
+		content,
+		&QRCodeOptions{
 			ErrorLevel: ErrorCorrectionLevelLow,
 			MicroQR:    true,
 		},
@@ -140,7 +137,7 @@ func TestPlotMicro(t *testing.T) {
 		t.Error(err)
 	}
 
-	file, err := os.Create("test_new.png")
+	file, err := os.Create("test_micro.png")
 	if err != nil {
 		t.Error(err)
 	}
@@ -151,7 +148,7 @@ func TestPlotMicro(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = ValidateContent(content, "test_new.png", false)
+	err = ValidateContent(content, "test_micro.png", false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -162,7 +159,7 @@ func TestPlotUTF8(t *testing.T) {
 	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
 		Mode:             encode.EncodingModeECI,
 		Data:             content,
-		SubMode:          encode.EncodingModeLatin1,
+		SubMode:          encode.EncodingModeByte,
 		AssignmentNumber: 26,
 	},
 	}, &QRCodeOptionsMultiMode{
@@ -196,7 +193,7 @@ func TestPlotCyrilic(t *testing.T) {
 	qr, err := CreateMultiMode([]*encode.EncodeBlock{{
 		Mode:             encode.EncodingModeECI,
 		Data:             content,
-		SubMode:          encode.EncodingModeLatin1,
+		SubMode:          encode.EncodingModeByte,
 		AssignmentNumber: 7,
 	},
 	}, &QRCodeOptionsMultiMode{
@@ -234,7 +231,7 @@ func TestPlotLong(t *testing.T) {
 	}
 
 	qr, err := Create(content, &QRCodeOptions{
-		Mode:       encode.EncodingModeLatin1,
+		Mode:       encode.EncodingModeByte,
 		ErrorLevel: ErrorCorrectionLevelQuartile,
 	})
 	if err != nil {
@@ -266,7 +263,7 @@ func TestPlotMixed(t *testing.T) {
 			Data: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 		},
 		{
-			Mode: encode.EncodingModeLatin1,
+			Mode: encode.EncodingModeByte,
 			Data: "abcdefghijklmnopqrstuvwxyz",
 		},
 		{
@@ -340,7 +337,7 @@ func GenerateAlphaNumericContent(size int) string {
 	return string(content)
 }
 
-func GenerateLatin1Content(size int) string {
+func GenerateByteContent(size int) string {
 	content := make([]rune, size)
 	chars := []rune("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}")
 	for i := 0; i < size; i++ {
@@ -362,14 +359,14 @@ func TestPlotMicroComparing(t *testing.T) {
 	modes := []encode.EncodingMode{
 		encode.EncodingModeNumeric,
 		encode.EncodingModeAlphaNumeric,
-		encode.EncodingModeLatin1,
+		encode.EncodingModeByte,
 		encode.EncodingModeKanji,
 	}
 
 	modesNames := []string{
 		"numeric",
 		"alphanumeric",
-		"latin1",
+		"byte",
 		"kanji",
 	}
 
@@ -447,8 +444,8 @@ func TestPlotMicroComparing(t *testing.T) {
 									content = GenerateNumericContent(content_size)
 								case encode.EncodingModeAlphaNumeric:
 									content = GenerateAlphaNumericContent(content_size)
-								case encode.EncodingModeLatin1:
-									content = GenerateLatin1Content(content_size)
+								case encode.EncodingModeByte:
+									content = GenerateByteContent(content_size)
 								case encode.EncodingModeKanji:
 									content = GenerateKanjiContent(content_size)
 								}
@@ -503,14 +500,14 @@ func TestPlotComparing(t *testing.T) {
 	modes := []encode.EncodingMode{
 		encode.EncodingModeNumeric,
 		encode.EncodingModeAlphaNumeric,
-		encode.EncodingModeLatin1,
+		encode.EncodingModeByte,
 		encode.EncodingModeKanji,
 	}
 
 	modesNames := []string{
 		"numeric",
 		"alphanumeric",
-		"latin1",
+		"byte",
 		"kanji",
 	}
 
@@ -606,8 +603,8 @@ func TestPlotComparing(t *testing.T) {
 									content = GenerateNumericContent(content_size)
 								case encode.EncodingModeAlphaNumeric:
 									content = GenerateAlphaNumericContent(content_size)
-								case encode.EncodingModeLatin1:
-									content = GenerateLatin1Content(content_size)
+								case encode.EncodingModeByte:
+									content = GenerateByteContent(content_size)
 								case encode.EncodingModeKanji:
 									content = GenerateKanjiContent(content_size)
 								}
@@ -627,7 +624,7 @@ func TestPlotComparing(t *testing.T) {
 									continue
 								}
 
-								err = ValidateContentRaw(qr.data, content)
+								err = ValidateContentRaw(qr.Data, content)
 								if err != nil {
 									t.Error(err)
 								}

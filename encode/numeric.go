@@ -6,9 +6,10 @@ import (
 	"unicode/utf8"
 )
 
-type NumericEncoder struct{}
+// numericEncoder is a struct that uses for converting string to numeric data.
+type numericEncoder struct{}
 
-func (*NumericEncoder) Encode(content string, queue chan ValueBlock) error {
+func (*numericEncoder) Encode(content string, queue chan ValueBlock) error {
 	triplets := len(content) / 3
 	if len(content)%3 != 0 {
 		triplets++
@@ -36,7 +37,7 @@ func (*NumericEncoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (*NumericEncoder) Size(content string) int {
+func (*numericEncoder) Size(content string) int {
 	length := utf8.RuneCountInString(content)
 	triplets := length / 3
 	tail := length % 3
@@ -48,7 +49,7 @@ func (*NumericEncoder) Size(content string) int {
 	return triplets*10 + extra
 }
 
-func (*NumericEncoder) CanEncode(content string) bool {
+func (*numericEncoder) CanEncode(content string) bool {
 	for _, r := range content {
 		if r < '0' || r > '9' {
 			return false
@@ -58,6 +59,6 @@ func (*NumericEncoder) CanEncode(content string) bool {
 	return true
 }
 
-func (*NumericEncoder) Mode() EncodingMode {
+func (*numericEncoder) Mode() EncodingMode {
 	return EncodingModeNumeric
 }

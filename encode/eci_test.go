@@ -25,9 +25,9 @@ func TestEciEncoder_Encode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			queue := make(chan ValueBlock, 100)
@@ -73,9 +73,9 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			if eci.CanEncode(test.content) != test.expected {
@@ -86,9 +86,9 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	// Invalid assignment number
 	t.Run("invalid assignment number", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 100,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.CanEncode("abc") {
@@ -98,9 +98,9 @@ func TestEciEncoder_CanEncode(t *testing.T) {
 
 	// Invalid content
 	t.Run("invalid content", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 4,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.CanEncode("АБВГД") {
@@ -129,9 +129,9 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
-			eci := &EciEncoder{
+			eci := &eciEncoder{
 				AssignmentNumber: test.assignmentNumber,
-				DataMode:         EncodingModeLatin1,
+				DataMode:         EncodingModeByte,
 			}
 
 			size := eci.Size(test.content)
@@ -143,9 +143,9 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	// Invalid assignment number
 	t.Run("invalid assignment number", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 100,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.Size("abc") != 0 {
@@ -155,9 +155,9 @@ func TestEciEncoder_Size(t *testing.T) {
 
 	// Invalid content
 	t.Run("invalid content", func(t *testing.T) {
-		eci := &EciEncoder{
+		eci := &eciEncoder{
 			AssignmentNumber: 4,
-			DataMode:         EncodingModeLatin1,
+			DataMode:         EncodingModeByte,
 		}
 
 		if eci.Size("АБВГД") != 0 {
@@ -167,7 +167,7 @@ func TestEciEncoder_Size(t *testing.T) {
 }
 
 func TestEciEncoder_Mode(t *testing.T) {
-	eci := &EciEncoder{}
+	eci := &eciEncoder{}
 	if eci.Mode() != EncodingModeECI {
 		t.Errorf("expected %v, got %v", EncodingModeECI, eci.Mode())
 	}

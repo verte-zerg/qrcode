@@ -22,7 +22,7 @@ func TestKanjiEncoder_Encode(t *testing.T) {
 		},
 	}
 
-	enc := &KanjiEncoder{}
+	enc := &kanjiEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestKanjiEncoder_CanEncode(t *testing.T) {
 		},
 	}
 
-	enc := &KanjiEncoder{}
+	enc := &kanjiEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestKanjiEncoder_Size(t *testing.T) {
 		},
 	}
 
-	enc := &KanjiEncoder{}
+	enc := &kanjiEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -130,7 +130,7 @@ func TestKanjiEncoder_Size(t *testing.T) {
 }
 
 func TestKanjiEncoder_Mode(t *testing.T) {
-	enc := &KanjiEncoder{}
+	enc := &kanjiEncoder{}
 	if enc.Mode() != EncodingModeKanji {
 		t.Errorf("expected %v, got %v", EncodingModeKanji, enc.Mode())
 	}

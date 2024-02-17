@@ -45,7 +45,7 @@ func TestEncodingMode(t *testing.T) {
 	}{
 		{"1234567890", EncodingModeNumeric},
 		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:", EncodingModeAlphaNumeric},
-		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", EncodingModeLatin1},
+		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", EncodingModeByte},
 		{"あア亜", EncodingModeKanji},
 	}
 
@@ -76,17 +76,17 @@ func TestLengthBits(t *testing.T) {
 	}{
 		{1, EncodingModeNumeric, 0, 10},
 		{1, EncodingModeAlphaNumeric, 0, 9},
-		{1, EncodingModeLatin1, 0, 8},
+		{1, EncodingModeByte, 0, 8},
 		{1, EncodingModeKanji, 0, 8},
 		{1, EncodingModeECI, EncodingModeNumeric, 10},
 		{10, EncodingModeNumeric, 0, 12},
 		{10, EncodingModeAlphaNumeric, 0, 11},
-		{10, EncodingModeLatin1, 0, 16},
+		{10, EncodingModeByte, 0, 16},
 		{10, EncodingModeECI, EncodingModeNumeric, 12},
 		{10, EncodingModeKanji, 0, 10},
 		{27, EncodingModeNumeric, 0, 14},
 		{27, EncodingModeAlphaNumeric, 0, 13},
-		{27, EncodingModeLatin1, 0, 16},
+		{27, EncodingModeByte, 0, 16},
 		{27, EncodingModeKanji, 0, 12},
 		{27, EncodingModeECI, EncodingModeNumeric, 14},
 
@@ -96,11 +96,11 @@ func TestLengthBits(t *testing.T) {
 		{-2, EncodingModeAlphaNumeric, 0, 3},
 		{-3, EncodingModeNumeric, 0, 5},
 		{-3, EncodingModeAlphaNumeric, 0, 4},
-		{-3, EncodingModeLatin1, 0, 4},
+		{-3, EncodingModeByte, 0, 4},
 		{-3, EncodingModeKanji, 0, 3},
 		{-4, EncodingModeNumeric, 0, 6},
 		{-4, EncodingModeAlphaNumeric, 0, 5},
-		{-4, EncodingModeLatin1, 0, 5},
+		{-4, EncodingModeByte, 0, 5},
 		{-4, EncodingModeKanji, 0, 4},
 	}
 
@@ -167,8 +167,8 @@ func TestPrefixBytes(t *testing.T) {
 		{EncodingModeNumeric, 0, 0, 1, 14, 11, []byte{0b00010000, 0b00000010, 0b11000000}},
 		{EncodingModeAlphaNumeric, 0, 0, 1, 16, 20, []byte{0b00100000, 0b00000001, 0b01000000}},
 		{EncodingModeKanji, 0, 0, 1, 8, 10, []byte{0b10000000, 0b10100000}},
-		{EncodingModeLatin1, 0, 0, 1, 8, 23, []byte{0b01000001, 0b01110000}},
-		{EncodingModeECI, EncodingModeLatin1, 26, 1, 10, 8, []byte{0b01110001, 0b10100100, 0b00000010, 0b00000000}},
+		{EncodingModeByte, 0, 0, 1, 8, 23, []byte{0b01000001, 0b01110000}},
+		{EncodingModeECI, EncodingModeByte, 26, 1, 10, 8, []byte{0b01110001, 0b10100100, 0b00000010, 0b00000000}},
 
 		// Micro QR
 		{EncodingModeNumeric, 0, 0, -1, 3, 2, []byte{0b01000000}},
@@ -178,8 +178,8 @@ func TestPrefixBytes(t *testing.T) {
 		{EncodingModeAlphaNumeric, 0, 0, -2, 3, 2, []byte{0b10100000}},
 		{EncodingModeAlphaNumeric, 0, 0, -3, 4, 3, []byte{0b01001100}},
 		{EncodingModeAlphaNumeric, 0, 0, -4, 5, 4, []byte{0b00100100}},
-		{EncodingModeLatin1, 0, 0, -3, 4, 3, []byte{0b10001100}},
-		{EncodingModeLatin1, 0, 0, -4, 5, 4, []byte{0b01000100}},
+		{EncodingModeByte, 0, 0, -3, 4, 3, []byte{0b10001100}},
+		{EncodingModeByte, 0, 0, -4, 5, 4, []byte{0b01000100}},
 		{EncodingModeKanji, 0, 0, -3, 3, 2, []byte{0b11010000}},
 		{EncodingModeKanji, 0, 0, -4, 4, 3, []byte{0b01100110}},
 	}
@@ -216,9 +216,9 @@ func TestGetSymbolsCount(t *testing.T) {
 	}{
 		{"1234567890", EncodingModeNumeric, 0, EncodingModeNumeric, 10},
 		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:", EncodingModeAlphaNumeric, 0, 0, 45},
-		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:abcdefghijklmnopqrstuvwxyz", EncodingModeLatin1, 0, 0, 71},
+		{"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:abcdefghijklmnopqrstuvwxyz", EncodingModeByte, 0, 0, 71},
 		{"あア亜", EncodingModeKanji, 0, 0, 3},
-		{"123ASDÄÖÏあア亜", EncodingModeECI, 26, EncodingModeLatin1, 21},
+		{"123ASDÄÖÏあア亜", EncodingModeECI, 26, EncodingModeByte, 21},
 	}
 
 	for _, test := range tests {
@@ -248,9 +248,9 @@ func TestCalculateDataBitsCount(t *testing.T) {
 	}{
 		{"1234567890", EncodingModeNumeric, 0, 0, 10*3 + 4},
 		{"123ASD:", EncodingModeAlphaNumeric, 0, 0, 11*3 + 6},
-		{"123ASDasd", EncodingModeLatin1, 0, 0, 9 * 8},
+		{"123ASDasd", EncodingModeByte, 0, 0, 9 * 8},
 		{"あア亜", EncodingModeKanji, 0, 0, 13 * 3},
-		{"123ASDÄÖÏあア亜", EncodingModeECI, 26, EncodingModeLatin1, 21 * 8},
+		{"123ASDÄÖÏあア亜", EncodingModeECI, 26, EncodingModeByte, 21 * 8},
 	}
 
 	for _, test := range tests {
@@ -295,7 +295,7 @@ func TestGetModeBits(t *testing.T) {
 	}{
 		{EncodingModeNumeric, 1, 4},
 		{EncodingModeAlphaNumeric, 1, 4},
-		{EncodingModeLatin1, 1, 4},
+		{EncodingModeByte, 1, 4},
 		{EncodingModeKanji, 1, 4},
 		{EncodingModeECI, 1, 16},
 
@@ -338,8 +338,8 @@ func TestEncodeData(t *testing.T) {
 		{"01234567", []byte{0b00000011, 0b00010101, 0b10011000, 0b01100000}, EncodingModeNumeric, 0, 0},
 		{"0123456789012345", []byte{0b00000011, 0b00010101, 0b10011010, 0b10011011, 0b10000101, 0b00111010, 0b10010100}, EncodingModeNumeric, 0, 0},
 
-		// Latin1
-		{"a÷åäö", []byte{0x61, 0xf7, 0xe5, 0xe4, 0xf6}, EncodingModeLatin1, 0, 0},
+		// Byte
+		{"a÷åäö", []byte{0x61, 0xf7, 0xe5, 0xe4, 0xf6}, EncodingModeByte, 0, 0},
 
 		// Kanji
 		{"点", []byte{0b01101100, 0b11111000}, EncodingModeKanji, 0, 0},
@@ -347,7 +347,7 @@ func TestEncodeData(t *testing.T) {
 		{"茗点", []byte{0b11010101, 0b01010011, 0b01100111, 0b11000000}, EncodingModeKanji, 0, 0},
 
 		// ECI
-		{"Ä点", []byte{0xc3, 0x84, 0xe7, 0x82, 0xb9}, EncodingModeECI, EncodingModeLatin1, 26},
+		{"Ä点", []byte{0xc3, 0x84, 0xe7, 0x82, 0xb9}, EncodingModeECI, EncodingModeByte, 26},
 	}
 
 	for _, test := range tests {
@@ -414,7 +414,7 @@ func TestEncodeData(t *testing.T) {
 		b := &EncodeBlock{
 			Data:             "Å",
 			Mode:             EncodingModeECI,
-			SubMode:          EncodingModeLatin1,
+			SubMode:          EncodingModeByte,
 			AssignmentNumber: 7,
 		}
 
@@ -446,7 +446,7 @@ func TestEncodeData(t *testing.T) {
 		b := &EncodeBlock{
 			Data:             "АБВГД",
 			Mode:             EncodingModeECI,
-			SubMode:          EncodingModeLatin1,
+			SubMode:          EncodingModeByte,
 			AssignmentNumber: 5,
 		}
 
@@ -500,9 +500,9 @@ func TestEncode(t *testing.T) {
 		{"123", EncodingModeNumeric, 0, 0, 1, []byte{0b00010000, 0b00001100, 0b01111011}},
 		{"012345", EncodingModeNumeric, 0, 0, 1, []byte{0b00010000, 0b00011000, 0b00001100, 0b01010110, 0b01000000}},
 
-		// Latin1
-		{"abc", EncodingModeLatin1, 0, 0, 1, []byte{0b01000000, 0b00110110, 0b00010110, 0b00100110, 0b00110000}},
-		{"äöå", EncodingModeLatin1, 0, 0, 1, []byte{0b01000000, 0b00111110, 0b01001111, 0b01101110, 0b01010000}},
+		// Byte
+		{"abc", EncodingModeByte, 0, 0, 1, []byte{0b01000000, 0b00110110, 0b00010110, 0b00100110, 0b00110000}},
+		{"äöå", EncodingModeByte, 0, 0, 1, []byte{0b01000000, 0b00111110, 0b01001111, 0b01101110, 0b01010000}},
 
 		// Kanji
 		{"点", EncodingModeKanji, 0, 0, 1, []byte{0b10000000, 0b00010110, 0b11001111, 0b10000000}},
@@ -510,9 +510,9 @@ func TestEncode(t *testing.T) {
 		{"茗点", EncodingModeKanji, 0, 0, 1, []byte{0b10000000, 0b00101101, 0b01010101, 0b00110110, 0b01111100}},
 
 		// ECI
-		{"Ä点", EncodingModeECI, EncodingModeLatin1, 26, 1, []byte{0b01110001, 0b10100100, 0b00000101, 0b11000011, 0b10000100, 0b11100111, 0b10000010, 0b10111001}},
-		{"abc", EncodingModeECI, EncodingModeLatin1, 26, 1, []byte{0b01110001, 0b10100100, 0b00000011, 0b01100001, 0b01100010, 0b01100011}},
-		{"äbcöå", EncodingModeECI, EncodingModeLatin1, 26, 1, []byte{0b01110001, 0b10100100, 0b00001000, 0b11000011, 0b10100100, 0b01100010, 0b01100011, 0b11000011, 0b10110110, 0b11000011, 0b10100101}},
+		{"Ä点", EncodingModeECI, EncodingModeByte, 26, 1, []byte{0b01110001, 0b10100100, 0b00000101, 0b11000011, 0b10000100, 0b11100111, 0b10000010, 0b10111001}},
+		{"abc", EncodingModeECI, EncodingModeByte, 26, 1, []byte{0b01110001, 0b10100100, 0b00000011, 0b01100001, 0b01100010, 0b01100011}},
+		{"äbcöå", EncodingModeECI, EncodingModeByte, 26, 1, []byte{0b01110001, 0b10100100, 0b00001000, 0b11000011, 0b10100100, 0b01100010, 0b01100011, 0b11000011, 0b10110110, 0b11000011, 0b10100101}},
 	}
 
 	for _, test := range tests {

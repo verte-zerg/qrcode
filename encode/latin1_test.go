@@ -2,7 +2,7 @@ package encode
 
 import "testing"
 
-func TestLatin1Encoder_Encode(t *testing.T) {
+func TestByteEncoder_Encode(t *testing.T) {
 	tests := []struct {
 		content string
 		blocks  []ValueBlock
@@ -31,7 +31,7 @@ func TestLatin1Encoder_Encode(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &byteEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestLatin1Encoder_Encode(t *testing.T) {
 	})
 }
 
-func TestLatin1Encoder_CanEncode(t *testing.T) {
+func TestByteEncoder_CanEncode(t *testing.T) {
 	tests := []struct {
 		content  string
 		expected bool
@@ -94,7 +94,7 @@ func TestLatin1Encoder_CanEncode(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &byteEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestLatin1Encoder_CanEncode(t *testing.T) {
 	}
 }
 
-func TestLatin1Encoder_Size(t *testing.T) {
+func TestByteEncoder_Size(t *testing.T) {
 	tests := []struct {
 		content  string
 		expected int
@@ -124,7 +124,7 @@ func TestLatin1Encoder_Size(t *testing.T) {
 		},
 	}
 
-	enc := &Latin1Encoder{}
+	enc := &byteEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -135,9 +135,9 @@ func TestLatin1Encoder_Size(t *testing.T) {
 	}
 }
 
-func TestLatin1Encoder_Mode(t *testing.T) {
-	enc := &Latin1Encoder{}
-	if enc.Mode() != EncodingModeLatin1 {
-		t.Errorf("expected %v, got %v", EncodingModeLatin1, enc.Mode())
+func TestByteEncoder_Mode(t *testing.T) {
+	enc := &byteEncoder{}
+	if enc.Mode() != EncodingModeByte {
+		t.Errorf("expected %v, got %v", EncodingModeByte, enc.Mode())
 	}
 }

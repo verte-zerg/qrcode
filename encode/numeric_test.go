@@ -37,7 +37,7 @@ func TestNumericEncoder_Encode(t *testing.T) {
 		},
 	}
 
-	enc := &NumericEncoder{}
+	enc := &numericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestNumericEncoder_Size(t *testing.T) {
 		},
 	}
 
-	enc := &NumericEncoder{}
+	enc := &numericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestNumericEncoder_CanEncode(t *testing.T) {
 		},
 	}
 
-	enc := &NumericEncoder{}
+	enc := &numericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestNumericEncoder_CanEncode(t *testing.T) {
 }
 
 func TestNumericEncoder_Mode(t *testing.T) {
-	enc := &NumericEncoder{}
+	enc := &numericEncoder{}
 	if enc.Mode() != EncodingModeNumeric {
 		t.Errorf("expected %v, got %v", EncodingModeNumeric, enc.Mode())
 	}

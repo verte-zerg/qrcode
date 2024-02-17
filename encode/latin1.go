@@ -7,13 +7,14 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-type Latin1Encoder struct{}
+// byteEncoder is a struct that uses for converting string to byte data.
+type byteEncoder struct{}
 
-func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
+func (byteEncoder) Encode(content string, queue chan ValueBlock) error {
 	enc := charmap.ISO8859_1.NewEncoder()
 	buf, err := enc.Bytes([]byte(content))
 	if err != nil {
-		return fmt.Errorf("failed to encode string to latin1: %w", err)
+		return fmt.Errorf("failed to encode string to byte: %w", err)
 	}
 
 	for _, b := range buf {
@@ -26,14 +27,14 @@ func (Latin1Encoder) Encode(content string, queue chan ValueBlock) error {
 	return nil
 }
 
-func (*Latin1Encoder) Size(content string) int {
+func (*byteEncoder) Size(content string) int {
 	return utf8.RuneCountInString(content) * 8
 }
 
-func (*Latin1Encoder) CanEncode(content string) bool {
-	return regexpLatin1.MatchString(content)
+func (*byteEncoder) CanEncode(content string) bool {
+	return regexpByte.MatchString(content)
 }
 
-func (*Latin1Encoder) Mode() EncodingMode {
-	return EncodingModeLatin1
+func (*byteEncoder) Mode() EncodingMode {
+	return EncodingModeByte
 }

@@ -7,12 +7,13 @@ import (
 	"unicode/utf8"
 )
 
+// EncodingMode is a type for encoding mode (numeric, alphanumeric, etc).
 type EncodingMode int
 
 const (
 	EncodingModeNumeric      EncodingMode = 1
 	EncodingModeAlphaNumeric EncodingMode = 2
-	EncodingModeLatin1       EncodingMode = 4
+	EncodingModeByte         EncodingMode = 4
 	EncodingModeKanji        EncodingMode = 8
 	EncodingModeECI          EncodingMode = 7
 )
@@ -24,21 +25,24 @@ const (
 // * 4 for versions 1-9
 // * 5 for versions 10-26
 // * 6 for versions 27-40.
-var EncodingModeLengthMap = map[EncodingMode][7]int{
+var encodingModeLengthMap = map[EncodingMode][7]int{
 	EncodingModeNumeric:      {3, 4, 5, 6, 10, 12, 14},
 	EncodingModeAlphaNumeric: {0, 3, 4, 5, 9, 11, 13},
-	EncodingModeLatin1:       {0, 0, 4, 5, 8, 16, 16},
+	EncodingModeByte:         {0, 0, 4, 5, 8, 16, 16},
 	EncodingModeKanji:        {0, 0, 3, 4, 8, 10, 12},
 }
 
-var EncodingModeEncoderMap = map[EncodingMode]QREncoder{
-	EncodingModeNumeric:      &NumericEncoder{},
-	EncodingModeAlphaNumeric: &AlphaNumericEncoder{},
-	EncodingModeLatin1:       &Latin1Encoder{},
-	EncodingModeKanji:        &KanjiEncoder{},
+// Map of encoding mode to encoder.
+var encodingModeEncoderMap = map[EncodingMode]QREncoder{
+	EncodingModeNumeric:      &numericEncoder{},
+	EncodingModeAlphaNumeric: &alphaNumericEncoder{},
+	EncodingModeByte:         &byteEncoder{},
+	EncodingModeKanji:        &kanjiEncoder{},
 }
 
-var ModeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
+// Map of encoding mode and version to value block for Micro QR code.
+// Structure: [encoding mode][version range number]
+var modeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
 	EncodingModeNumeric: {
 		{Value: 0, Bits: 0},
 		{Value: 0, Bits: 1},
@@ -51,7 +55,7 @@ var ModeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
 		{Value: 1, Bits: 2},
 		{Value: 1, Bits: 3},
 	},
-	EncodingModeLatin1: {
+	EncodingModeByte: {
 		{Value: 0, Bits: 0},
 		{Value: 0, Bits: 0},
 		{Value: 2, Bits: 2},
@@ -65,6 +69,7 @@ var ModeVersionValueBlockMap = map[EncodingMode][4]ValueBlock{
 	},
 }
 
+// ValueBlock is a block of data with a number of bits.
 type ValueBlock struct {
 	Value int
 	Bits  int
@@ -84,16 +89,25 @@ var ErrVersionDoesNotSupportEncodingMode = errors.New("version does not support 
 
 var regexpNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9]+$`)
 var regexpAlphaNumeric *regexp.Regexp = regexp.MustCompile(`^[0-9A-Z $%*+\-./:]+$`)
-var regexpLatin1 *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
+var regexpByte *regexp.Regexp = regexp.MustCompile(`^[\x00-\xFF]+$`)
 var regexpKanji *regexp.Regexp = regexp.MustCompile(`^[\p{Hiragana}\p{Katakana}\p{Han}]+$`)
 
+// QREncoder is an interface for all encoders.
 type QREncoder interface {
+	// Mode returns the encoding mode.
 	Mode() EncodingMode
+
+	// Encode encodes the string to the byte array.
 	Encode(s string, queue chan ValueBlock) error
+
+	// CanEncode returns true if the string can be encoded with the encoder.
 	CanEncode(content string) bool
+
+	// Size returns the number of bits for the string.
 	Size(content string) int
 }
 
+// EncodeBlock is a block of data for encoding, representing a part (or whole) of the content.
 type EncodeBlock struct {
 	Mode EncodingMode
 	Data string
@@ -103,9 +117,11 @@ type EncodeBlock struct {
 	AssignmentNumber uint
 }
 
+// GetSymbolsCount returns the number of symbols in the block.
+// The number of symbols is the number of characters for all modes except ECI (it's the number of bytes).
 func (b *EncodeBlock) GetSymbolsCount() int {
 	if b.Mode == EncodingModeECI {
-		enc := EciEncoder{
+		enc := eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
@@ -115,17 +131,18 @@ func (b *EncodeBlock) GetSymbolsCount() int {
 	return utf8.RuneCountInString(b.Data)
 }
 
+// CalculateDataBitsCount returns the number of data bits for the block.
 func (b *EncodeBlock) CalculateDataBitsCount() (int, error) {
 	var enc QREncoder
 
 	if b.Mode == EncodingModeECI {
-		enc = EciEncoder{
+		enc = eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
 	} else {
 		var ok bool
-		enc, ok = EncodingModeEncoderMap[b.Mode]
+		enc, ok = encodingModeEncoderMap[b.Mode]
 		if !ok {
 			return 0, ErrUnknownEncodingMode
 		}
@@ -140,6 +157,7 @@ func (b *EncodeBlock) CalculateDataBitsCount() (int, error) {
 	return size, nil
 }
 
+// GetLengthBits returns the number of length bits for the block.
 func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
 	if version < -4 || version > 40 || version == 0 {
 		return 0, ErrVersionInvalid{version}
@@ -150,7 +168,7 @@ func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
 		mode = b.SubMode
 	}
 
-	dataLength, ok := EncodingModeLengthMap[mode]
+	dataLength, ok := encodingModeLengthMap[mode]
 	if !ok {
 		return 0, ErrUnknownEncodingMode
 	}
@@ -172,6 +190,7 @@ func (b *EncodeBlock) GetLengthBits(version int) (int, error) {
 	return dataLength[6], nil
 }
 
+// GetModeBits returns the number of mode bits for the block.
 func (b *EncodeBlock) GetModeBits(version int) int {
 	if version < 0 {
 		return -version - 1
@@ -183,6 +202,8 @@ func (b *EncodeBlock) GetModeBits(version int) int {
 	return 4
 }
 
+// GetBytesPrefix returns the prefix of the block in bytes.
+// The prefix consists of the mode and the count of items.
 func (b *EncodeBlock) GetBytesPrefix(
 	version,
 	lengthBits,
@@ -190,7 +211,7 @@ func (b *EncodeBlock) GetBytesPrefix(
 	queue chan ValueBlock,
 ) {
 	if version < 0 {
-		queue <- ModeVersionValueBlockMap[b.Mode][-version-1]
+		queue <- modeVersionValueBlockMap[b.Mode][-version-1]
 	} else {
 		queue <- ValueBlock{
 			Value: int(b.Mode),
@@ -219,13 +240,13 @@ func (b *EncodeBlock) GetBytesPrefix(
 func (b *EncodeBlock) EncodeData(queue chan ValueBlock) error {
 	var enc QREncoder
 	if b.Mode == EncodingModeECI {
-		enc = EciEncoder{
+		enc = eciEncoder{
 			AssignmentNumber: b.AssignmentNumber,
 			DataMode:         b.SubMode,
 		}
 	} else {
 		var ok bool
-		enc, ok = EncodingModeEncoderMap[b.Mode]
+		enc, ok = encodingModeEncoderMap[b.Mode]
 		if !ok {
 			return ErrUnknownEncodingMode
 		}
@@ -239,6 +260,7 @@ func (b *EncodeBlock) EncodeData(queue chan ValueBlock) error {
 	return nil
 }
 
+// Encode encodes the block data to bytes.
 func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 	symbolsCount := b.GetSymbolsCount()
 	lengthBits, err := b.GetLengthBits(version)
@@ -263,7 +285,6 @@ func (b *EncodeBlock) Encode(version int, queue chan ValueBlock) (int, error) {
 }
 
 // GetEncodingMode returns the encoding mode for the given string.
-// EncodingMode is one of the EncodingMode constants (EncodingModeNumeric, EncodingModeAlphaNumeric, EncodingModeLatin1, EncodingModeKanji)
 func GetEncodingMode(s string) (EncodingMode, error) {
 	if regexpNumeric.MatchString(s) {
 		return EncodingModeNumeric, nil
@@ -271,8 +292,8 @@ func GetEncodingMode(s string) (EncodingMode, error) {
 	if regexpAlphaNumeric.MatchString(s) {
 		return EncodingModeAlphaNumeric, nil
 	}
-	if regexpLatin1.MatchString(s) {
-		return EncodingModeLatin1, nil
+	if regexpByte.MatchString(s) {
+		return EncodingModeByte, nil
 	}
 	if regexpKanji.MatchString(s) {
 		return EncodingModeKanji, nil
@@ -280,10 +301,7 @@ func GetEncodingMode(s string) (EncodingMode, error) {
 	return 0, ErrCannotDeterminEncodingMode
 }
 
-// GetLengthBits returns the number of length bits for the given version and encoding mode.
-// Version is an integer from 1 to 40 inclusive.
-// Mode is one of the EncodingMode constants.
-
+// GenerateData is a helper function to pack a sequence of ValueBlocks into a byte array.
 func GenerateData(queue chan ValueBlock, result chan []byte) {
 	var data []byte
 	freeBits := 0

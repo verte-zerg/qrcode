@@ -17,3 +17,7 @@
 
 # VSCode
 .vscode
+
+# Tests
+cover
+*Reader

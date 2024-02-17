@@ -18,7 +18,7 @@ func TestAlphaNumericEncoder_Encode(t *testing.T) {
 		},
 	}
 
-	enc := &AlphaNumericEncoder{}
+	enc := &alphaNumericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestAlphaNumericEncoder_CanEncode(t *testing.T) {
 		},
 	}
 
-	enc := &AlphaNumericEncoder{}
+	enc := &alphaNumericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestAlphaNumericEncoder_Size(t *testing.T) {
 		},
 	}
 
-	enc := &AlphaNumericEncoder{}
+	enc := &alphaNumericEncoder{}
 
 	for _, test := range tests {
 		t.Run(test.content, func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestAlphaNumericEncoder_Size(t *testing.T) {
 }
 
 func TestAlphaNumericEncoder_Mode(t *testing.T) {
-	enc := &AlphaNumericEncoder{}
+	enc := &alphaNumericEncoder{}
 	if enc.Mode() != EncodingModeAlphaNumeric {
 		t.Errorf("expected %v, got %v", EncodingModeAlphaNumeric, enc.Mode())
 	}

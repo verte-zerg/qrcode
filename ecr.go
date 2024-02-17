@@ -1,28 +1,30 @@
 package qrcode
 
-func CalculateEDCPoly(data []byte, codewords int) []byte {
-	dataPoly := &Polynomial{data}
+// calculateEDCData calculates error correction data for the given data block, version and error correction level
+func calculateEDCPoly(data []byte, codewords int) []byte {
+	dataPoly := &polynomial{data}
 	degree := codewords - len(data)
 	dataPoly = dataPoly.IncreaseDegree(degree)
-	edcPoly := dataPoly.Divide(GeneratorPolynomials[degree])
+	edcPoly := dataPoly.Modulo(generatorPolynomials[degree])
 	return edcPoly.Coefficients
 }
 
-func GetEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
+// getEDCData returns error correction data for the given data, version and error correction level
+func getEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byte {
 	var buf []byte
 
-	var blocks []ECBlock
+	var blocks []ecBlock
 	if version < 0 {
-		blocks = MicroErrorCorrectionBlocks[-version][errorLevel]
+		blocks = microErrorCorrectionBlocks[-version][errorLevel]
 	} else {
-		blocks = ErrorCorrectionBlocks[version][errorLevel]
+		blocks = errorCorrectionBlocks[version][errorLevel]
 	}
 
 	var blocksData [][]byte
 	dataIdx := 0
 	for _, block := range blocks {
 		for i := 0; i < block.Blocks; i++ {
-			errorData := CalculateEDCPoly(data[dataIdx:dataIdx+block.DataCodewords], block.TotalCodewords)
+			errorData := calculateEDCPoly(data[dataIdx:dataIdx+block.DataCodewords], block.TotalCodewords)
 			blocksData = append(blocksData, errorData)
 			dataIdx += block.DataCodewords
 		}
@@ -50,7 +52,7 @@ func GetEDCData(data []byte, version int, errorLevel ErrorCorrectionLevel) []byt
 
 // Count of error correction code words for Micro QR Code version and error correction level
 // Structure: [version][error correction level]
-var MicroErrorCorrectionCodeWords = [5][4]int{
+var microErrorCorrectionCodeWords = [5][4]int{
 	{0, 0, 0, 0}, // added to shift the index by 1
 	{2, 0, 0, 0},
 	{5, 6, 0, 0},
@@ -60,7 +62,7 @@ var MicroErrorCorrectionCodeWords = [5][4]int{
 
 // Count of error correction code words for each version and error correction level
 // Structure: [version][error correction level]
-var ErrorCorrectionCodeWords = [41][4]int{
+var errorCorrectionCodeWords = [41][4]int{
 	{0, 0, 0, 0}, // added to shift the index by 1
 	{7, 10, 13, 17},
 	{10, 16, 22, 28},
@@ -104,24 +106,17 @@ var ErrorCorrectionCodeWords = [41][4]int{
 	{750, 1372, 2040, 2430},
 }
 
-type ECBlock struct {
+// Error correction block metadata
+type ecBlock struct {
 	Blocks         int
 	TotalCodewords int
 	DataCodewords  int
-	Ratio          int //TODO: rename
+	Ratio          int //TODO: unused, wrong name
 }
-
-// ['give you up','let you down','run around and desert you'].map(x=>'Never gonna '+x)
-// Never gonna give you upNever gonna let you downNever gonna run around and desert you
 
 // Error correction blocks for Micro QR Code version and error correction level
 // Structure: [version][error correction level][block]
-//
-// (5,3,0)Ь
-// (10,5,1 )Ь
-// (10,4,2)Ь (17,11,2)Ь (17,9,4)
-// (24,16,3)Ь (24,14,5) (24,10,7)
-var MicroErrorCorrectionBlocks = [5][4][]ECBlock{
+var microErrorCorrectionBlocks = [5][4][]ecBlock{
 	{{}, {}, {}, {}}, // added to shift the index by 1
 	{{{1, 5, 3, 0}}, {}, {}, {}},
 	{{{1, 10, 5, 1}}, {{1, 10, 4, 2}}, {}, {}},
@@ -131,7 +126,7 @@ var MicroErrorCorrectionBlocks = [5][4][]ECBlock{
 
 // Error correction blocks for each version and error correction level
 // Structure: [version][error correction level][block]
-var ErrorCorrectionBlocks = [41][4][]ECBlock{
+var errorCorrectionBlocks = [41][4][]ecBlock{
 	{{}, {}, {}, {}}, // added to shift the index by 1
 	{{{1, 26, 19, 2}}, {{1, 26, 16, 4}}, {{1, 26, 13, 6}}, {{1, 26, 9, 8}}},
 	{{{1, 44, 34, 4}}, {{1, 44, 28, 8}}, {{1, 44, 22, 11}}, {{1, 44, 16, 14}}},
