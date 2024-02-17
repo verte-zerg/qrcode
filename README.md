@@ -147,6 +147,8 @@ The list of supported ECI assignments can be found in the `encode` package.
 
 ### Features
 
+- [ ] add predefined QR code types (vCard, WiFi, etc.)
+- [ ] support other image formats (JPEG, GIF, etc.)
 - [ ] data optimization algorithm
 - [ ] custom data encoding
 - [ ] structured append codes
