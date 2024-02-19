@@ -113,7 +113,7 @@ func TestPlotBase(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 
@@ -144,7 +144,7 @@ func TestPlotMicro(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 
@@ -178,7 +178,7 @@ func TestPlotUTF8(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 
@@ -212,7 +212,7 @@ func TestPlotCyrilic(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 
@@ -247,7 +247,7 @@ func TestPlotLong(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 }
@@ -286,7 +286,7 @@ func TestPlotMixed(t *testing.T) {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		t.Error(err)
 	}
 
@@ -475,7 +475,7 @@ func TestPlotMicroComparing(t *testing.T) {
 									continue
 								}
 
-								if err := qr.Plot(file); err != nil {
+								if err := qr.Plot(file, nil); err != nil {
 									t.Error(err)
 									file.Close()
 									continue
