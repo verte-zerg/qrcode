@@ -44,7 +44,7 @@ if err != nil {
 
 defer file.Close()
 
-if err := qr.Plot(file); err != nil {
+if err := qr.Plot(file, nil); err != nil {
     fmt.Println(err)
 }
 ```
@@ -129,13 +129,29 @@ func main() {
 
 	defer file.Close()
 
-	if err := qr.Plot(file); err != nil {
+	if err := qr.Plot(file, nil); err != nil {
 		panic(err)
 	}
 }
 ```
 
 The list of supported ECI assignments can be found in the `encode` package.
+
+You can specify several plot options using the `PlotOptions` struct:
+
+```go
+type PlotOptions struct {
+	// Scale is the scale for the QR Code image (in pixels).
+	// The image will be len(data) * Scale x len(data) * Scale pixels.
+	// Default: 4.
+	Scale int
+
+	// Border is the border for the QR Code image (in pixels).
+	// Default: 0.
+	Border int
+}
+```
+
 
 ## Functions
 
