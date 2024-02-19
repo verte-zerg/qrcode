@@ -23,13 +23,45 @@ func TestPlotRectangle(t *testing.T) {
 	whiteClr := color.RGBA{255, 255, 255, 255}
 	for _, row := range data {
 		x, y, left, right, top, bottom := row[0], row[1], row[2], row[3], row[4], row[5]
-		plotRectangle(img, x, y, step, image.White)
+		plotRectangle(img, x, y, step, 0, image.White)
 		for idx := left; idx < right; idx++ {
 			for jdx := top; jdx < bottom; jdx++ {
 				clr := img.At(idx, jdx)
 				if clr != whiteClr {
 					t.Errorf("expected black pixel at (%v, %v), got %v", idx, jdx, img.At(idx, jdx))
 				}
+			}
+		}
+	}
+}
+
+func TestPlotBorder(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 6, 6))
+	border := 2
+	whiteClr := color.RGBA{255, 255, 255, 255}
+	blackClr := color.RGBA{0, 0, 0, 255}
+
+	// Fill the image with black
+	for idx := 0; idx < 6; idx++ {
+		for jdx := 0; jdx < 6; jdx++ {
+			img.Set(idx, jdx, blackClr)
+		}
+	}
+
+	expected := [][]color.Color{
+		{whiteClr, whiteClr, whiteClr, whiteClr, whiteClr, whiteClr},
+		{whiteClr, whiteClr, whiteClr, whiteClr, whiteClr, whiteClr},
+		{whiteClr, whiteClr, blackClr, blackClr, whiteClr, whiteClr},
+		{whiteClr, whiteClr, blackClr, blackClr, whiteClr, whiteClr},
+		{whiteClr, whiteClr, whiteClr, whiteClr, whiteClr, whiteClr},
+		{whiteClr, whiteClr, whiteClr, whiteClr, whiteClr, whiteClr},
+	}
+
+	plotBorder(img, border, image.White)
+	for idx := 0; idx < 6; idx++ {
+		for jdx := 0; jdx < 6; jdx++ {
+			if clr := img.At(idx, jdx); clr != expected[idx][jdx] {
+				t.Errorf("expected %v at (%v, %v), got %v", expected[idx][jdx], idx, jdx, clr)
 			}
 		}
 	}
@@ -63,7 +95,7 @@ func TestPlot(t *testing.T) {
 		}
 
 		var buf bytes.Buffer
-		err := plot(data, &buf, 1)
+		err := plot(data, &buf, 1, 0)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -97,7 +129,7 @@ func TestPlot(t *testing.T) {
 		var buf InvalidWriter
 
 		// Call the function and check for error
-		err := plot(data, &buf, 1)
+		err := plot(data, &buf, 1, 0)
 		if err == nil {
 			t.Error("expected an error, but got nil")
 		}

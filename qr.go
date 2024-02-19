@@ -9,8 +9,10 @@ import (
 
 const (
 	// DEFAULT_SCALE is the default scale for the QR Code image.
-	// The image will be len(data) * DEFAULT_SCALE x len(data) * DEFAULT_SCALE pixels.
 	DEFAULT_SCALE = 4
+
+	// DEFAULT_BORDER is the default border for the QR Code image.
+	DEFAULT_BORDER = 0
 )
 
 const (
@@ -64,6 +66,15 @@ type QRCodeOptionsMultiMode struct {
 	// Enable micro QR code
 	// Default: false
 	MicroQR bool
+}
+
+type PlotOptions struct {
+	// Scale is the scale for the QR Code image (in pixels).
+	// The image will be len(data) * Scale x len(data) * Scale pixels.
+	Scale int
+
+	// Border is the border for the QR Code image (in pixels).
+	Border int
 }
 
 // CreateMultiMode creates a QR Code with multiple modes.
@@ -128,7 +139,15 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 	})
 }
 
-// Plot plots the QR Code to the given writer.
-func (qr *QRCode) Plot(writer io.Writer) error {
-	return plot(qr.Data, writer, DEFAULT_SCALE)
+// Plot plots the QR Code to the given writer with the given options.
+func (qr *QRCode) Plot(writer io.Writer, options *PlotOptions) error {
+	if options == nil {
+		options = &PlotOptions{}
+	}
+
+	if options.Scale == 0 {
+		options.Scale = DEFAULT_SCALE
+	}
+
+	return plot(qr.Data, writer, options.Scale, options.Border)
 }
