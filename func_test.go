@@ -117,7 +117,7 @@ func TestPlotBase(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = ValidateContent(content, "test_new.png", false)
+	err = ValidateContent(content, "test_new.jpeg", false)
 	if err != nil {
 		t.Error(err)
 	}
