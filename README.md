@@ -5,12 +5,12 @@ requires only an `golang.org/x/text` dependency, maintainable by the Go team.
 
 ## Features
 
-- [x] all modes (numeric, alphanumeric, byte, kanji, eci)
-- [x] Micro QR codes
-- [x] export to PNG/JPEG/GIF
-- [x] ECI (Extended Channel Interpretation)
-- [x] requires only an `golang.org/x/text` dependency
-- [x] covered by unit/functional tests
+- all modes (numeric, alphanumeric, byte, kanji, eci)
+- Micro QR codes
+- export to PNG/JPEG/GIF
+- ECI (Extended Channel Interpretation)
+- requires only an `golang.org/x/text` dependency
+- covered by unit/functional tests
 
 ## Installation
 
