@@ -4,8 +4,19 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/gif"
+	"image/jpeg"
 	"image/png"
 	"io"
+)
+
+type OutputFormat string
+
+const (
+	// Output formats
+	PNG  = "png"
+	JPEG = "jpeg"
+	GIF  = "gif"
 )
 
 // plotRectangle fills a rectangle in the image with the given color
@@ -31,7 +42,7 @@ func plotBorder(img *image.RGBA, border int, clr color.Color) {
 }
 
 // plot creates a PNG image from the given data and writes it to the writer
-func plot(data [][]Cell, writer io.Writer, scale, border int) error {
+func plot(data [][]Cell, writer io.Writer, scale, border int, outputFormat OutputFormat) error {
 	imgSize := len(data)*scale + 2*border
 
 	img := image.NewRGBA(image.Rect(0, 0, imgSize, imgSize))
@@ -50,7 +61,18 @@ func plot(data [][]Cell, writer io.Writer, scale, border int) error {
 		plotBorder(img, border, image.White)
 	}
 
-	err := png.Encode(writer, img)
+	var err error
+
+	switch outputFormat {
+	case PNG:
+		err = png.Encode(writer, img)
+	case JPEG:
+		err = jpeg.Encode(writer, img, nil)
+	case GIF:
+		err = gif.Encode(writer, img, nil)
+	default:
+		err = fmt.Errorf("unsupported output format: %s", outputFormat)
+	}
 
 	if err != nil {
 		return fmt.Errorf("failed to encode png: %w", err)

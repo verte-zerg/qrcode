@@ -5,12 +5,12 @@ requires only an `golang.org/x/text` dependency, maintainable by the Go team.
 
 ## Features
 
-- [x] all modes (numeric, alphanumeric, byte, kanji, eci)
-- [x] Micro QR codes
-- [x] export to PNG
-- [x] ECI (Extended Channel Interpretation)
-- [x] requires only an `golang.org/x/text` dependency
-- [x] covered by unit/functional tests
+- all modes (numeric, alphanumeric, byte, kanji, eci)
+- Micro QR codes
+- export to PNG/JPEG/GIF
+- ECI (Extended Channel Interpretation)
+- requires only an `golang.org/x/text` dependency
+- covered by unit/functional tests
 
 ## Installation
 
@@ -149,22 +149,31 @@ type PlotOptions struct {
 	// Border is the border for the QR Code image (in pixels).
 	// Default: 0.
 	Border int
+
+	// OutputFormat is the format of the output image.
+	// Default: PNG.
+	OutputFormat OutputFormat
 }
 ```
+
+Supported output formats:
+- `PNG`
+- `JPEG`
+- `GIF`
 
 
 ## Functions
 
 `Create(content string, options *QRCodeOptions) (*QRCode, error)` - creates a QR code with the specified content and options.
 `CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error)` - creates a QR code with the specified blocks of data and options.
-`(qr *QRCode) Plot(writer io.Writer) error` - plots the QR code using PNG format to the specified writer.
+`(qr *QRCode) Plot(writer io.Writer, options *PlotOptions) error` - plots the QR code with the specified options to the writer.
 
 ## Roadmap
 
 ### Features
 
 - [ ] add predefined QR code types (vCard, WiFi, etc.)
-- [ ] support other image formats (JPEG, GIF, etc.)
+- [x] support other image formats (JPEG, GIF, etc.)
 - [ ] data optimization algorithm
 - [ ] custom data encoding
 - [ ] structured append codes

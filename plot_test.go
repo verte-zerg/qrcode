@@ -8,6 +8,16 @@ import (
 	"testing"
 )
 
+var (
+	outputFormatsColor = map[OutputFormat]struct {
+		white, black color.Color
+	}{
+		PNG:  {color.RGBA{255, 255, 255, 255}, color.RGBA{0, 0, 0, 255}},
+		JPEG: {color.YCbCr{255, 128, 128}, color.YCbCr{0, 128, 128}},
+		GIF:  {color.RGBA{255, 255, 255, 255}, color.RGBA{0, 0, 0, 255}},
+	}
+)
+
 func TestPlotRectangle(t *testing.T) {
 	img := image.NewRGBA(image.Rect(0, 0, 10, 10))
 	step := 2
@@ -38,8 +48,9 @@ func TestPlotRectangle(t *testing.T) {
 func TestPlotBorder(t *testing.T) {
 	img := image.NewRGBA(image.Rect(0, 0, 6, 6))
 	border := 2
-	whiteClr := color.RGBA{255, 255, 255, 255}
-	blackClr := color.RGBA{0, 0, 0, 255}
+	colors := outputFormatsColor[PNG]
+	whiteClr := colors.white
+	blackClr := colors.black
 
 	// Fill the image with black
 	for idx := 0; idx < 6; idx++ {
@@ -94,30 +105,36 @@ func TestPlot(t *testing.T) {
 			},
 		}
 
-		var buf bytes.Buffer
-		err := plot(data, &buf, 1, 0)
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		// Open the generated image
-		img, _, err := image.Decode(&buf)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		clrWhite := color.RGBA{255, 255, 255, 255}
-		clrBlack := color.RGBA{0, 0, 0, 255}
-		for idx, row := range data {
-			for jdx, cell := range row {
-				clr := img.At(jdx, idx)
-				if cell.Value && clr != clrBlack {
-					t.Errorf("expected black pixel at (%v, %v), got %v", jdx, idx, clr)
+		formats := []OutputFormat{PNG, GIF}
+		for _, format := range formats {
+			t.Run(string(format), func(t *testing.T) {
+				var buf bytes.Buffer
+				err := plot(data, &buf, 1, 0, format)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
 				}
-				if !cell.Value && clr != clrWhite {
-					t.Errorf("expected white pixel at (%v, %v), got %v", jdx, idx, clr)
+
+				// Open the generated image
+				img, _, err := image.Decode(&buf)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
 				}
-			}
+
+				colors := outputFormatsColor[format]
+				clrWhite := colors.white
+				clrBlack := colors.black
+				for idx, row := range data {
+					for jdx, cell := range row {
+						clr := img.At(jdx, idx)
+						if cell.Value && clr != clrBlack {
+							t.Errorf("expected black pixel at (%v, %v), expected %v, got %v", jdx, idx, clrBlack, clr)
+						}
+						if !cell.Value && clr != clrWhite {
+							t.Errorf("expected white pixel at (%v, %v), expected %v, got %v", jdx, idx, clrWhite, clr)
+						}
+					}
+				}
+			})
 		}
 	})
 
@@ -129,7 +146,7 @@ func TestPlot(t *testing.T) {
 		var buf InvalidWriter
 
 		// Call the function and check for error
-		err := plot(data, &buf, 1, 0)
+		err := plot(data, &buf, 1, 0, PNG)
 		if err == nil {
 			t.Error("expected an error, but got nil")
 		}

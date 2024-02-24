@@ -106,18 +106,18 @@ func TestPlotBase(t *testing.T) {
 		t.Error(err)
 	}
 
-	file, err := os.Create("test_new.png")
+	file, err := os.Create("test_new.jpeg")
 	if err != nil {
 		t.Error(err)
 	}
 
 	defer file.Close()
 
-	if err := qr.Plot(file, nil); err != nil {
+	if err := qr.Plot(file, &PlotOptions{OutputFormat: JPEG}); err != nil {
 		t.Error(err)
 	}
 
-	err = ValidateContent(content, "test_new.png", false)
+	err = ValidateContent(content, "test_new.jpeg", false)
 	if err != nil {
 		t.Error(err)
 	}
