@@ -13,6 +13,9 @@ const (
 
 	// DEFAULT_BORDER is the default border for the QR Code image.
 	DEFAULT_BORDER = 0
+
+	// DEFAULT_OUTPUT_FORMAT is the default output format for the QR Code image.
+	DEFAULT_OUTPUT_FORMAT = PNG
 )
 
 const (
@@ -75,6 +78,9 @@ type PlotOptions struct {
 
 	// Border is the border for the QR Code image (in pixels).
 	Border int
+
+	// OutputFormat is the format of the output image.
+	OutputFormat OutputFormat
 }
 
 // CreateMultiMode creates a QR Code with multiple modes.
@@ -149,5 +155,9 @@ func (qr *QRCode) Plot(writer io.Writer, options *PlotOptions) error {
 		options.Scale = DEFAULT_SCALE
 	}
 
-	return plot(qr.Data, writer, options.Scale, options.Border)
+	if options.OutputFormat == "" {
+		options.OutputFormat = DEFAULT_OUTPUT_FORMAT
+	}
+
+	return plot(qr.Data, writer, options.Scale, options.Border, options.OutputFormat)
 }
