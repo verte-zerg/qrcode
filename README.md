@@ -1,3 +1,5 @@
+[![build](https://github.com/verte-zerg/qrcode/actions/workflows/test.yml/badge.svg)](https://github.com/verte-zerg/qrcode/actions/workflows/test.yml)&nbsp;[![Coverage Status](https://coveralls.io/repos/github/verte-zerg/qrcode/badge.svg?branch=master)](https://coveralls.io/github/verte-zerg/qrcode?branch=master)&nbsp;[![Go Report Card](https://goreportcard.com/badge/github.com/verte-zerg/qrcode)](https://goreportcard.com/report/github.com/verte-zerg/qrcode)&nbsp;[![Go Reference](https://pkg.go.dev/badge/github.com/verte-zerg/qrcode.svg)](https://pkg.go.dev/github.com/verte-zerg/qrcode)&nbsp;[![GitHub release](https://img.shields.io/github/release/verte-zerg/qrcode.svg)](https://github.com/verte-zerg/qrcode/releases)
+
 # QRCode Package
 
 This package is a implementation of QR code encoding in Go. It offers an idiomatic Go implementation of QR code encoding,
