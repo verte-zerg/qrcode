@@ -70,7 +70,10 @@ func ValidateContentRaw(data [][]Cell, content string) error {
 
 	buf[i] = sharpValue
 
-	stdin.Write(buf)
+	_, err = stdin.Write(buf)
+	if err != nil {
+		return fmt.Errorf("error writing to stdin: %w", err)
+	}
 
 	stdin.Close()
 
