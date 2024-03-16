@@ -10,6 +10,8 @@ requires only an `golang.org/x/text` dependency, maintainable by the Go team.
 - all modes (numeric, alphanumeric, byte, kanji, eci)
 - Micro QR codes
 - export to PNG/JPEG/GIF
+- custom colors
+- different shapes for the markers
 - ECI (Extended Channel Interpretation)
 - requires only an `golang.org/x/text` dependency
 - covered by unit/functional tests
@@ -155,6 +157,18 @@ type PlotOptions struct {
 	// OutputFormat is the format of the output image.
 	// Default: PNG.
 	OutputFormat OutputFormat
+
+	// MarkerType is the type of marker to use for the QR Code.
+	// Default: Square.
+	MarkerType MarkerType
+
+	// WhiteColor is the color to use for the white cells.
+	// Default: White.
+	WhiteColor color.Color
+
+	// BlackColor is the color to use for the black cells.
+	// Default: Black.
+	BlackColor color.Color
 }
 ```
 
@@ -163,11 +177,19 @@ Supported output formats:
 - `JPEG`
 - `GIF`
 
+Supported marker types:
+- `Square`
+- `Circle`
+- `SmallCircle`
+- `HorizontalLine`
+- `VerticalLine`
 
 ## Functions
 
 `Create(content string, options *QRCodeOptions) (*QRCode, error)` - creates a QR code with the specified content and options.
+
 `CreateMultiMode(blocks []*encode.EncodeBlock, options *QRCodeOptionsMultiMode) (*QRCode, error)` - creates a QR code with the specified blocks of data and options.
+
 `(qr *QRCode) Plot(writer io.Writer, options *PlotOptions) error` - plots the QR code with the specified options to the writer.
 
 ## Roadmap
@@ -179,8 +201,8 @@ Supported output formats:
 - [ ] data optimization algorithm
 - [ ] custom data encoding
 - [ ] structured append codes
-- [ ] custom colors
-- [ ] different shapes for the markers
+- [x] custom colors
+- [x] different shapes for the markers
 - [ ] support adding a logo to the QR code
 
 ## License
