@@ -19,25 +19,52 @@ var (
 )
 
 func TestPlotRectangle(t *testing.T) {
-	img := image.NewRGBA(image.Rect(0, 0, 10, 10))
-	step := 2
+	img := image.NewRGBA(image.Rect(0, 0, 6, 6))
+	scale := 2
 	data := [][]int{
-		// x, y, left, right, top, bottom
-		{0, 0, 0, 2, 0, 2},
-		{1, 1, 2, 4, 2, 4},
-		{2, 2, 4, 6, 4, 6},
-		{3, 3, 6, 8, 6, 8},
-		{4, 4, 8, 10, 8, 10},
+		// left, right, top, bottom
+		{0, 2, 0, 2},
+		{2, 4, 2, 4},
+		{4, 6, 4, 6},
 	}
 
-	whiteClr := color.RGBA{255, 255, 255, 255}
+	wC := Cell{Value: false}
+	bC := Cell{Value: true}
+
+	cells := [][]Cell{
+		{bC, bC, wC, wC, wC, wC},
+		{bC, bC, wC, wC, wC, wC},
+		{wC, wC, bC, bC, wC, wC},
+		{wC, wC, bC, bC, wC, wC},
+		{wC, wC, wC, wC, bC, bC},
+		{wC, wC, wC, wC, bC, bC},
+	}
+
+	// fill the image with white
+	for idx := 0; idx < 10; idx++ {
+		for jdx := 0; jdx < 10; jdx++ {
+			img.Set(idx, jdx, image.White)
+		}
+	}
+
+	plotOptions := &PlotOptions{
+		Scale:        scale,
+		Border:       0,
+		OutputFormat: PNG,
+		MarkerType:   Square,
+		WhiteColor:   image.White,
+		BlackColor:   image.Black,
+	}
+
+	blackClr := color.RGBA{0, 0, 0, 255}
+	plotSquadMarkers(img, cells, plotOptions)
+
 	for _, row := range data {
-		x, y, left, right, top, bottom := row[0], row[1], row[2], row[3], row[4], row[5]
-		plotRectangle(img, x, y, step, 0, image.White)
+		left, right, top, bottom := row[0], row[1], row[2], row[3]
 		for idx := left; idx < right; idx++ {
 			for jdx := top; jdx < bottom; jdx++ {
 				clr := img.At(idx, jdx)
-				if clr != whiteClr {
+				if clr != blackClr {
 					t.Errorf("expected black pixel at (%v, %v), got %v", idx, jdx, img.At(idx, jdx))
 				}
 			}
@@ -85,6 +112,15 @@ func (w *InvalidWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestPlot(t *testing.T) {
+	plotOptions := &PlotOptions{
+		Scale:        1,
+		Border:       0,
+		OutputFormat: PNG,
+		MarkerType:   Square,
+		WhiteColor:   image.White,
+		BlackColor:   image.Black,
+	}
+
 	// Valid test
 	t.Run("valid", func(t *testing.T) {
 		data := [][]Cell{
@@ -107,11 +143,15 @@ func TestPlot(t *testing.T) {
 
 		formats := []OutputFormat{PNG, GIF}
 		for _, format := range formats {
+
 			t.Run(string(format), func(t *testing.T) {
 				var buf bytes.Buffer
-				err := plot(data, &buf, 1, 0, format)
+
+				plotOptions.OutputFormat = format
+
+				err := plot(data, &buf, plotOptions)
 				if err != nil {
-					t.Errorf("unexpected error: %v", err)
+					t.Fatalf("unexpected error: %v", err)
 				}
 
 				// Open the generated image
@@ -119,7 +159,6 @@ func TestPlot(t *testing.T) {
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
-
 				colors := outputFormatsColor[format]
 				clrWhite := colors.white
 				clrBlack := colors.black
@@ -146,7 +185,7 @@ func TestPlot(t *testing.T) {
 		var buf InvalidWriter
 
 		// Call the function and check for error
-		err := plot(data, &buf, 1, 0, PNG)
+		err := plot(data, &buf, plotOptions)
 		if err == nil {
 			t.Error("expected an error, but got nil")
 		}

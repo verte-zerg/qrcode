@@ -126,6 +126,37 @@ func TestPlotBase(t *testing.T) {
 	}
 }
 
+func TestPlotCircleMarkers(t *testing.T) {
+	content := "849231412341234123598712309587"
+	qr, err := Create(content, &QRCodeOptions{
+		Mode:       encode.EncodingModeNumeric,
+		ErrorLevel: ErrorCorrectionLevelHigh,
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	file, err := os.Create("test_circle_markers.png")
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer file.Close()
+
+	if err := qr.Plot(file, &PlotOptions{
+		MarkerType: VerticalLine,
+		Scale:      50,
+	}); err != nil {
+		t.Error(err)
+	}
+
+	err = ValidateContent(content, "test_circle_markers.png", false)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestPlotMicro(t *testing.T) {
 	content := "8492314"
 	qr, err := Create(
@@ -251,6 +282,11 @@ func TestPlotLong(t *testing.T) {
 	defer file.Close()
 
 	if err := qr.Plot(file, nil); err != nil {
+		t.Error(err)
+	}
+
+	err = ValidateContent(content, "test_long.png", false)
+	if err != nil {
 		t.Error(err)
 	}
 }
@@ -529,14 +565,14 @@ func TestPlotComparing(t *testing.T) {
 	}
 
 	tests := make([]ComparingTest, 0)
-	previours_limits := ContentLengthLimits[0]
+	previous_limits := ContentLengthLimits[0]
 	for i := 1; i <= 40; i++ {
 		errorLevelsTests := make([]ComparingTestErrorLevel, 0)
 		for j := 0; j < 4; j++ {
 			modeTests := make([]ComparingTestMode, 0)
 			for k := 0; k < 4; k++ {
 				limit := ContentLengthLimits[i][j][k]
-				from := previours_limits[j][k] + 1
+				from := previous_limits[j][k] + 1
 
 				if limit != 0 {
 					modeTests = append(modeTests, ComparingTestMode{

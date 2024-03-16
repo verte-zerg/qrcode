@@ -2,6 +2,8 @@ package qrcode
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"io"
 
 	"github.com/verte-zerg/qrcode/encode"
@@ -16,6 +18,9 @@ const (
 
 	// DEFAULT_OUTPUT_FORMAT is the default output format for the QR Code image.
 	DEFAULT_OUTPUT_FORMAT = PNG
+
+	// DEFAULT_MARKER_TYPE is the default marker type for the QR Code image.
+	DEFAULT_MARKER_TYPE = Square
 )
 
 const (
@@ -74,13 +79,28 @@ type QRCodeOptionsMultiMode struct {
 type PlotOptions struct {
 	// Scale is the scale for the QR Code image (in pixels).
 	// The image will be len(data) * Scale x len(data) * Scale pixels.
+	// Default: 4.
 	Scale int
 
 	// Border is the border for the QR Code image (in pixels).
+	// Default: 0.
 	Border int
 
 	// OutputFormat is the format of the output image.
+	// Default: PNG.
 	OutputFormat OutputFormat
+
+	// MarkerType is the type of marker to use for the QR Code.
+	// Default: Square.
+	MarkerType MarkerType
+
+	// WhiteColor is the color to use for the white cells.
+	// Default: image.White.
+	WhiteColor color.Color
+
+	// BlackColor is the color to use for the black cells.
+	// Default: image.Black.
+	BlackColor color.Color
 }
 
 // CreateMultiMode creates a QR Code with multiple modes.
@@ -134,7 +154,7 @@ func Create(content string, options *QRCodeOptions) (*QRCode, error) {
 		if err != nil {
 			encodeBlock.Mode = encode.EncodingModeECI
 			encodeBlock.SubMode = encode.EncodingModeByte
-			encodeBlock.AssignmentNumber = 26
+			encodeBlock.AssignmentNumber = encode.UTF8
 		}
 	}
 
@@ -159,5 +179,17 @@ func (qr *QRCode) Plot(writer io.Writer, options *PlotOptions) error {
 		options.OutputFormat = DEFAULT_OUTPUT_FORMAT
 	}
 
-	return plot(qr.Data, writer, options.Scale, options.Border, options.OutputFormat)
+	if options.MarkerType == "" {
+		options.MarkerType = DEFAULT_MARKER_TYPE
+	}
+
+	if options.WhiteColor == nil {
+		options.WhiteColor = image.White
+	}
+
+	if options.BlackColor == nil {
+		options.BlackColor = image.Black
+	}
+
+	return plot(qr.Data, writer, options)
 }
