@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/verte-zerg/qrcode/encode"
+	"qrcode/encode"
 )
 
 const (

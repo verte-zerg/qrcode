@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/verte-zerg/qrcode/encode"
+	"qrcode/encode"
 )
 
 // Level of error correction

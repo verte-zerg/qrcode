@@ -1,4 +1,4 @@
-module github.com/verte-zerg/qrcode
+module qrcode
 
 go 1.22.6
 
