@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/verte-zerg/qrcode/encode"
+	"qrcode/encode"
 )
 
 func ValidateContent(content string, filename string, microQR bool) error {
